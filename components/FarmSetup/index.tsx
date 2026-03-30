@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, Sparkles, CheckCircle2, ShieldCheck, Database } from 'lucide-react';
@@ -21,11 +21,7 @@ export default function FarmSetupWizard() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [toast, setToast] = useState<string | null>(null);
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    setIsReady(true);
-  }, []);
+  const [isReady] = useState(true);
 
   const [data, setData] = useState<WizardData>({
     location: "",

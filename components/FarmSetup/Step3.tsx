@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import { Sprout, CheckCircle, Sparkles, AlertCircle } from 'lucide-react';
+import { Sprout, Check, Sparkles, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface Step3Props {
@@ -98,7 +98,7 @@ export default function Step3({ data, updateData, onSubmit, onBack }: Step3Props
           <span className="relative z-10">
             {completing ? "INITIATING SYSTEM..." : "COMPLETE OPS"}
           </span>
-          {!completing && <Check size={20} spellCheck={false} className="relative z-10" />}
+          {!completing && <Check size={20} className="relative z-10" />}
         </button>
       </div>
     </div>

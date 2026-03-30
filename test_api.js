@@ -1,12 +1,15 @@
-const axios = require('axios');
-const FormData = require('form-data');
-const fs = require('fs');
-const path = require('path');
+import axios from 'axios';
+import FormData from 'form-data';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function testApi() {
   try {
     const formData = new FormData();
-    // Create a dummy 1-byte file
     const dummyPath = path.join(__dirname, 'dummy.wav');
     fs.writeFileSync(dummyPath, Buffer.from([0]));
     

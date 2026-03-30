@@ -3,12 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently \"npm run next:dev\" \"npm run ml:dev\"",
+    "next:dev": "next dev --webpack",
+    "ml:dev": "cd ml-backend && pip install -r requirements.txt -q && python train_model.py && uvicorn main:app --host 0.0.0.0 --port 8000 --reload",
+    "ml:start": "cd ml-backend && uvicorn main:app --host 0.0.0.0 --port 8000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@heyputer/puter.js": "^2.2.14",
     "@types/leaflet": "^1.9.21",
     "@types/recordrtc": "^5.6.15",
     "axios": "^1.14.0",
@@ -29,6 +33,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "tailwindcss": "^4",

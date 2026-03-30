@@ -1,6 +1,8 @@
 "use client";
-import { useState, useRef } from "react";
-import { Upload, ScanLine, Leaf, AlertTriangle } from "lucide-react";
+import { useState, useRef, useCallback } from "react";
+import Image from "next/image";
+import axios from "axios";
+import { Upload, ScanLine, Leaf, AlertTriangle, Sprout, Loader2 } from "lucide-react";
 
 const mockResults: Record<string, { disease: string; confidence: number; severity: string; treatment: string; prevention: string }> = {
   default: {
@@ -12,21 +14,107 @@ const mockResults: Record<string, { disease: string; confidence: number; severit
   },
 };
 
+const REGIONS = ["North", "South", "East", "West", "Central"];
+
+interface CropRecommendation {
+  name: string;
+  icon: string;
+  confidence: number;
+  suitable: string;
+  season: string;
+}
+
+interface PredictionResult {
+  recommendations: CropRecommendation[];
+  soil_analysis: {
+    nitrogen: number;
+    phosphorus: number;
+    potassium: number;
+    ph: number;
+    region: string;
+  };
+  ai_advice: string;
+}
+
 export default function ScanPage() {
+  const [activeTab, setActiveTab] = useState<"disease" | "crop">("disease");
+  
+  return (
+    <div>
+      <div className="page-title">AI Scanner</div>
+      <div className="page-subtitle">Choose between disease detection or crop recommendation</div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+        <button
+          onClick={() => setActiveTab("disease")}
+          className={`tab-btn ${activeTab === "disease" ? "tab-btn-active" : ""}`}
+        >
+          <AlertTriangle size={16} />
+          Disease Scanner
+        </button>
+        <button
+          onClick={() => setActiveTab("crop")}
+          className={`tab-btn ${activeTab === "crop" ? "tab-btn-active" : ""}`}
+        >
+          <Sprout size={16} />
+          Crop Recommender
+        </button>
+      </div>
+
+      {activeTab === "disease" ? <DiseaseScanner /> : <CropRecommender />}
+    </div>
+  );
+}
+
+interface DiseaseResult {
+  disease: string;
+  confidence: number;
+  severity: string;
+  treatment: string;
+  prevention: string;
+  crop?: string;
+  category?: string;
+  top_predictions?: { disease: string; confidence: number }[];
+  is_mock?: boolean;
+}
+
+function DiseaseScanner() {
   const [image, setImage] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
-  const [result, setResult] = useState<typeof mockResults["default"] | null>(null);
+  const [result, setResult] = useState<DiseaseResult | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  function handleFile(file: File) {
+  async function handleFile(file: File) {
     const url = URL.createObjectURL(file);
     setImage(url);
     setResult(null);
     setScanning(true);
-    setTimeout(() => {
+    
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const response = await axios.post("http://localhost:8001/predict/disease", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      
+      setScanning(false);
+      setResult({
+        disease: response.data.disease,
+        confidence: response.data.confidence,
+        severity: response.data.severity,
+        treatment: response.data.treatment,
+        prevention: response.data.prevention,
+        crop: response.data.crop,
+        category: response.data.category,
+        top_predictions: response.data.top_predictions,
+        is_mock: response.data.is_mock,
+      });
+    } catch {
+      console.warn("Disease detection backend unavailable (Network Error). Using mock fallback.");
       setScanning(false);
       setResult(mockResults["default"]);
-    }, 2200);
+    }
   }
 
   function onDrop(e: React.DragEvent) {
@@ -35,13 +123,21 @@ export default function ScanPage() {
     if (file && file.type.startsWith("image/")) handleFile(file);
   }
 
-  return (
-    <div>
-      <div className="page-title">Crop Disease Scanner</div>
-      <div className="page-subtitle">Upload a leaf or crop image for AI-powered disease detection and treatment advice</div>
+  const isHealthy = result?.category === "healthy" || result?.disease?.toLowerCase().includes("healthy");
 
+  const categoryColors: Record<string, { bg: string; text: string }> = {
+    fungal: { bg: "#fef3c7", text: "#92400e" },
+    bacterial: { bg: "#fee2e2", text: "#991b1b" },
+    viral: { bg: "#ede9fe", text: "#5b21b6" },
+    pest: { bg: "#ffedd5", text: "#9a3412" },
+    oomycete: { bg: "#fce7f3", text: "#9d174d" },
+    healthy: { bg: "#dcfce7", text: "#166534" },
+    unknown: { bg: "#f3f4f6", text: "#374151" },
+  };
+
+  return (
+    <>
       <div className="grid-2">
-        {/* Upload zone */}
         <div className="card">
           <div className="section-title">Upload Crop Image</div>
           <div
@@ -64,8 +160,7 @@ export default function ScanPage() {
             }}
           >
             {image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={image} alt="crop" style={{ width: "100%", height: 220, objectFit: "cover", borderRadius: 8 }} />
+              <Image src={image} alt="crop" width={400} height={220} style={{ width: "100%", height: 220, objectFit: "cover", borderRadius: 8 }} />
             ) : (
               <div style={{ textAlign: "center", padding: 24 }}>
                 <Upload size={36} color="#22c55e" style={{ marginBottom: 12 }} />
@@ -88,7 +183,10 @@ export default function ScanPage() {
             <button
               className="btn btn-green"
               style={{ marginTop: 12, width: "100%" }}
-              onClick={() => { setScanning(true); setResult(null); setTimeout(() => { setScanning(false); setResult(mockResults["default"]); }, 2200); }}
+              onClick={async () => {
+                if (!inputRef.current?.files?.[0]) return;
+                await handleFile(inputRef.current.files[0]);
+              }}
               disabled={scanning}
             >
               <ScanLine size={15} />
@@ -108,7 +206,6 @@ export default function ScanPage() {
           <style>{`@keyframes progress { from { width: 0% } to { width: 100% } }`}</style>
         </div>
 
-        {/* Result */}
         <div className="card">
           <div className="section-title">Detection Result</div>
           {!result && !scanning && (
@@ -125,31 +222,72 @@ export default function ScanPage() {
           )}
           {result && !scanning && (
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                <AlertTriangle size={20} color="#eab308" />
-                <div style={{ fontSize: 16, fontWeight: 700, color: "#1f2937" }}>{result.disease}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                {isHealthy ? (
+                  <Leaf size={20} color="#22c55e" />
+                ) : (
+                  <AlertTriangle size={20} color="#eab308" />
+                )}
+                <div style={{ fontSize: 16, fontWeight: 700, color: isHealthy ? "#166534" : "#1f2937" }}>{result.disease}</div>
               </div>
 
-              <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+                {result.crop && (
+                  <span style={{
+                    background: "#dbeafe", color: "#1e40af",
+                    padding: "2px 10px", borderRadius: 4, fontSize: 11, fontWeight: 600,
+                  }}>🌿 {result.crop}</span>
+                )}
                 <span className="badge badge-yellow">Confidence: {result.confidence}%</span>
-                <span className="badge badge-yellow">Severity: {result.severity}</span>
+                <span className={`badge ${isHealthy ? "badge-green" : "badge-yellow"}`}>Severity: {result.severity}</span>
+                {result.category && result.category !== "unknown" && (
+                  <span style={{
+                    background: categoryColors[result.category]?.bg || "#f3f4f6",
+                    color: categoryColors[result.category]?.text || "#374151",
+                    padding: "2px 10px", borderRadius: 4, fontSize: 11, fontWeight: 600, textTransform: "capitalize",
+                  }}>{result.category}</span>
+                )}
+                {result.is_mock && (
+                  <span style={{
+                    background: "#fef3c7", color: "#92400e",
+                    padding: "2px 10px", borderRadius: 4, fontSize: 11, fontWeight: 600,
+                  }}>⚠ Demo Mode</span>
+                )}
               </div>
 
               <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>💊 Treatment</div>
-                <div style={{ fontSize: 13, color: "#4b5563", background: "#fef9c3", padding: "10px 12px", borderRadius: 8 }}>{result.treatment}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Treatment</div>
+                <div style={{ fontSize: 13, color: "#4b5563", background: isHealthy ? "#f0fdf4" : "#fef9c3", padding: "10px 12px", borderRadius: 8 }}>{result.treatment}</div>
               </div>
 
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>🛡️ Prevention</div>
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Prevention</div>
                 <div style={{ fontSize: 13, color: "#4b5563", background: "#f0fdf4", padding: "10px 12px", borderRadius: 8 }}>{result.prevention}</div>
               </div>
+
+              {result.top_predictions && result.top_predictions.length > 1 && (
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 8 }}>Top Predictions</div>
+                  {result.top_predictions.map((pred, idx) => (
+                    <div key={idx} style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                      padding: "6px 10px", background: idx === 0 ? "#f0fdf4" : "#fafafa",
+                      borderRadius: 6, marginBottom: 4, fontSize: 12,
+                      border: idx === 0 ? "1px solid #bbf7d0" : "1px solid #f3f4f6",
+                    }}>
+                      <span style={{ color: "#374151", fontWeight: idx === 0 ? 600 : 400 }}>
+                        {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"} {pred.disease}
+                      </span>
+                      <span style={{ color: "#6b7280", fontWeight: 600 }}>{pred.confidence}%</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
 
-      {/* Tips */}
       <div className="card" style={{ marginTop: 20 }}>
         <div className="section-title">Scanning Tips</div>
         <div className="grid-3">
@@ -165,6 +303,323 @@ export default function ScanPage() {
           ))}
         </div>
       </div>
-    </div>
+    </>
+  );
+}
+
+function CropRecommender() {
+  const [nitrogen, setNitrogen] = useState("");
+  const [phosphorus, setPhosphorus] = useState("");
+  const [potassium, setPotassium] = useState("");
+  const [ph, setPh] = useState("");
+  const [region, setRegion] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<PredictionResult | null>(null);
+  const [error, setError] = useState("");
+
+  const handleSubmit = useCallback(async () => {
+    if (!nitrogen || !phosphorus || !potassium || !ph) {
+      setError("Please fill in all nutrient values");
+      return;
+    }
+    
+    setError("");
+    setLoading(true);
+    setResult(null);
+    
+    try {
+      const response = await axios.post<PredictionResult>("http://localhost:8001/predict/crop", {
+        nitrogen: parseFloat(nitrogen),
+        phosphorus: parseFloat(phosphorus),
+        potassium: parseFloat(potassium),
+        ph: parseFloat(ph),
+        region: region || undefined,
+      });
+      setResult(response.data);
+    } catch (err) {
+      setError("Failed to get recommendations. Make sure the ML backend is running on port 8000.");
+      console.warn("Crop prediction backend unavailable:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [nitrogen, phosphorus, potassium, ph, region]);
+
+  const fillFromSoilData = () => {
+    setNitrogen("78");
+    setPhosphorus("42");
+    setPotassium("95");
+    setPh("6.8");
+    setRegion("North");
+  };
+
+  return (
+    <>
+      <div className="grid-2">
+        <div className="card">
+          <div className="section-title">Soil Data Input</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 6, display: "block" }}>
+                Region
+              </label>
+              <select
+                value={region}
+                onChange={e => setRegion(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  border: "1px solid #d1d5db",
+                  fontSize: 14,
+                  background: "#fff",
+                }}
+              >
+                <option value="">Select region</option>
+                {REGIONS.map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid-2" style={{ gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 6, display: "block" }}>
+                  Nitrogen (N) <span style={{ color: "#22c55e" }}>kg/ha</span>
+                </label>
+                <input
+                  type="number"
+                  value={nitrogen}
+                  onChange={e => setNitrogen(e.target.value)}
+                  placeholder="e.g. 78"
+                  min="0"
+                  max="200"
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: 8,
+                    border: "1px solid #d1d5db",
+                    fontSize: 14,
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 6, display: "block" }}>
+                  Phosphorus (P) <span style={{ color: "#3b82f6" }}>kg/ha</span>
+                </label>
+                <input
+                  type="number"
+                  value={phosphorus}
+                  onChange={e => setPhosphorus(e.target.value)}
+                  placeholder="e.g. 42"
+                  min="0"
+                  max="200"
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: 8,
+                    border: "1px solid #d1d5db",
+                    fontSize: 14,
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="grid-2" style={{ gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 6, display: "block" }}>
+                  Potassium (K) <span style={{ color: "#f59e0b" }}>kg/ha</span>
+                </label>
+                <input
+                  type="number"
+                  value={potassium}
+                  onChange={e => setPotassium(e.target.value)}
+                  placeholder="e.g. 95"
+                  min="0"
+                  max="200"
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: 8,
+                    border: "1px solid #d1d5db",
+                    fontSize: 14,
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 6, display: "block" }}>
+                  pH Level <span style={{ color: "#8b5cf6" }}>(0-14)</span>
+                </label>
+                <input
+                  type="number"
+                  value={ph}
+                  onChange={e => setPh(e.target.value)}
+                  placeholder="e.g. 6.8"
+                  min="0"
+                  max="14"
+                  step="0.1"
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: 8,
+                    border: "1px solid #d1d5db",
+                    fontSize: 14,
+                  }}
+                />
+              </div>
+            </div>
+
+            <button
+              className="btn btn-outline"
+              onClick={fillFromSoilData}
+              style={{ fontSize: 12, padding: "8px 12px" }}
+            >
+              Auto-fill from Farm Data
+            </button>
+
+            {error && (
+              <div style={{ color: "#ef4444", fontSize: 13, padding: "8px 12px", background: "#fef2f2", borderRadius: 6 }}>
+                {error}
+              </div>
+            )}
+
+            <button
+              className="btn btn-green"
+              onClick={handleSubmit}
+              disabled={loading}
+              style={{ width: "100%" }}
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" />
+                  Analysing Soil...
+                </>
+              ) : (
+                <>
+                  <Sprout size={15} />
+                  Get Crop Recommendations
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="section-title">Crop Recommendations</div>
+          {!result && !loading && (
+            <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af" }}>
+              <Sprout size={40} style={{ margin: "0 auto 12px", opacity: 0.4 }} />
+              <div style={{ fontSize: 13 }}>Enter soil data to get AI-powered crop recommendations</div>
+            </div>
+          )}
+          {loading && (
+            <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af" }}>
+              <Loader2 size={40} style={{ margin: "0 auto 12px", opacity: 0.6, color: "#22c55e" }} className="animate-spin" />
+              <div style={{ fontSize: 13 }}>Analysing soil data with ML model...</div>
+            </div>
+          )}
+          {result && (
+            <div>
+              {result.recommendations.map((crop, idx) => (
+                <div
+                  key={crop.name}
+                  style={{
+                    padding: 16,
+                    background: idx === 0 ? "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)" : "#fafafa",
+                    borderRadius: 12,
+                    marginBottom: idx < result.recommendations.length - 1 ? 12 : 0,
+                    border: idx === 0 ? "2px solid #22c55e" : "1px solid #e5e7eb",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                    <span style={{ fontSize: 32 }}>{crop.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: "#1f2937" }}>{crop.name}</div>
+                        {idx === 0 && <span className="badge badge-green">Best Match</span>}
+                      </div>
+                      <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                        <span className="badge badge-green">{crop.confidence}% Match</span>
+                        <span className="badge badge-blue">{crop.season}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: "#6b7280" }}>
+                        <strong>Best for:</strong> {crop.suitable}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {result.ai_advice && (
+                <div style={{ marginTop: 16, padding: 14, background: "#eff6ff", borderRadius: 10, border: "1px solid #bfdbfe" }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "#1e40af", marginBottom: 4 }}>AI Soil Advice</div>
+                  <div style={{ fontSize: 13, color: "#3b82f6" }}>{result.ai_advice}</div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {result && result.soil_analysis && (
+        <div className="card" style={{ marginTop: 20 }}>
+          <div className="section-title">Soil Analysis Summary</div>
+          <div className="grid-4">
+            {[
+              { label: "Nitrogen", value: result.soil_analysis.nitrogen, unit: "kg/ha", color: "#22c55e" },
+              { label: "Phosphorus", value: result.soil_analysis.phosphorus, unit: "kg/ha", color: "#3b82f6" },
+              { label: "Potassium", value: result.soil_analysis.potassium, unit: "kg/ha", color: "#f59e0b" },
+              { label: "pH Level", value: result.soil_analysis.ph, unit: "", color: "#8b5cf6" },
+            ].map(item => (
+              <div key={item.label} style={{ textAlign: "center", padding: 16, background: "#fafafa", borderRadius: 10 }}>
+                <div style={{ fontSize: 24, fontWeight: 700, color: item.color }}>{item.value}</div>
+                <div style={{ fontSize: 11, color: "#9ca3af", marginBottom: 2 }}>{item.label}</div>
+                <div style={{ fontSize: 10, color: "#d1d5db" }}>{item.unit}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        .tab-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 20px;
+          border-radius: 10;
+          font-size: 14px;
+          font-weight: 600;
+          border: 2px solid #e5e7eb;
+          background: #fff;
+          color: #6b7280;
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+        .tab-btn:hover {
+          border-color: #22c55e;
+          color: #22c55e;
+        }
+        .tab-btn-active {
+          background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+          border-color: #22c55e;
+          color: #fff;
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .badge-blue {
+          background: #dbeafe;
+          color: #1e40af;
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: 600;
+        }
+      `}</style>
+    </>
   );
 }

@@ -1,18 +1,18 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
-import {
-  AreaChart, Area, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from "recharts";
-import { Cloud, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Cloud, TrendingUp, AlertTriangle } from "lucide-react";
 
-const soilData = [
-  { name: "N", value: 85 },
-  { name: "P", value: 62 },
-  { name: "K", value: 74 },
-  { name: "Moisture", value: 58 },
-];
+const SoilChart = dynamic(
+  () => import("@/components/SoilChart"),
+  { ssr: false, loading: () => <div className="skeleton" style={{ height: 180 }} /> }
+);
+
+const WeatherTrendChart = dynamic(
+  () => import("@/components/WeatherTrendChart"),
+  { ssr: false, loading: () => <div className="skeleton" style={{ height: 180 }} /> }
+);
 
 const soilChartData = [
   { day: "Mon", N: 82, P: 60, K: 72, Moisture: 55 },
@@ -41,27 +41,100 @@ const alerts = [
 ];
 
 function CountUp({ end, prefix = "" }: { end: number; prefix?: string }) {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(end);
+  const prevEndRef = useRef(end);
+  
   useEffect(() => {
-    let start = 0;
-    const step = end / 40;
+    if (prevEndRef.current === end) return;
+    prevEndRef.current = end;
+    
+    const duration = 500;
+    const steps = 30;
+    const stepValue = end / steps;
+    let current = 0;
+    let step = 0;
+    
     const timer = setInterval(() => {
-      start += step;
-      if (start >= end) { setCount(end); clearInterval(timer); }
-      else setCount(Math.floor(start));
-    }, 30);
+      step++;
+      current = Math.min(end, Math.round(stepValue * step));
+      setCount(current);
+      if (step >= steps) {
+        clearInterval(timer);
+        setCount(end);
+      }
+    }, duration / steps);
+    
     return () => clearInterval(timer);
   }, [end]);
+
   return <span>{prefix}{count}</span>;
 }
 
+interface SetupData {
+  location: string;
+  soilType: string;
+  landArea: string;
+}
+
+interface HomeWeather {
+  temperature: number;
+  humidity: number;
+}
+
+const alertLegend = [
+  { color: "#22c55e", label: "N" },
+  { color: "#3b82f6", label: "P" },
+  { color: "#f59e0b", label: "K" },
+  { color: "#8b5cf6", label: "Moisture" },
+];
+
 export default function HomePage() {
-  const [setupData, setSetupData] = useState<any>(null);
+  const [setupData, setSetupData] = useState<SetupData | null>(null);
+  const [weather, setWeather] = useState<HomeWeather | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const stored = localStorage.getItem("farm_setup_data");
-    if (stored) setSetupData(JSON.parse(stored));
+    if (stored) {
+      try {
+        setSetupData(JSON.parse(stored));
+      } catch {
+        // ignore invalid JSON
+      }
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          fetch(
+            `https://api.open-meteo.com/v1/forecast?` +
+            `latitude=${latitude}&longitude=${longitude}` +
+            `&current=temperature_2m,relative_humidity_2m` +
+            `&timezone=auto`
+          )
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+              if (data) {
+                setWeather({
+                  temperature: Math.round(data.current.temperature_2m),
+                  humidity: Math.round(data.current.relative_humidity_2m),
+                });
+              }
+            })
+            .catch(() => {});
+        },
+        () => {}
+      );
+    }
   }, []);
+
+  const activeAlerts = useMemo(() => alerts.filter(a => a.type !== "green"), []);
+  const alertCount = activeAlerts.length;
+
+  const displayTemp = weather?.temperature ?? 32;
+  const displayHumidity = weather?.humidity ?? 67;
 
   return (
     <div>
@@ -81,7 +154,7 @@ export default function HomePage() {
         }}>
           <div>
             <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>Complete Your Farm Setup</div>
-            <div style={{ fontSize: 13, opacity: 0.9 }}>To get more accurate AI advice, please provide your farm's location and soil type.</div>
+            <div style={{ fontSize: 13, opacity: 0.9 }}>To get more accurate AI advice, please provide your farm&apos;s location and soil type.</div>
           </div>
           <Link href="/setup">
             <button className="btn btn-green" style={{ background: "white", color: "#065f46", border: "none", fontWeight: 600 }}>
@@ -110,9 +183,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Top 3 cards */}
       <div className="grid-3" style={{ marginBottom: 20 }}>
-        {/* Weather */}
         <div className="card">
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
             <Cloud size={16} color="#16a34a" />
@@ -121,98 +192,65 @@ export default function HomePage() {
           <div style={{ display: "flex", gap: 24 }}>
             <div>
               <div className="stat-label">Air temperature</div>
-              <div className="stat-value"><CountUp end={32} />°C</div>
+              <div className="stat-value">{mounted ? <CountUp end={displayTemp} /> : displayTemp}°C</div>
             </div>
             <div>
               <div className="stat-label">Humidity</div>
-              <div className="stat-value"><CountUp end={67} />%</div>
+              <div className="stat-value">{mounted ? <CountUp end={displayHumidity} /> : displayHumidity}%</div>
             </div>
           </div>
         </div>
 
-        {/* Yield */}
         <div className="card">
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
             <TrendingUp size={16} color="#16a34a" />
             <span style={{ fontWeight: 600, fontSize: 14 }}>Yield forecast</span>
           </div>
           <div className="stat-label">AI estimated for current season</div>
-          <div className="stat-value stat-positive"><CountUp end={4200} /> kg/ha</div>
+          <div className="stat-value stat-positive">{mounted ? <CountUp end={4200} /> : "4,200"} kg/ha</div>
           <div style={{ fontSize: 12, color: "#16a34a", marginTop: 4 }}>↑ 8% above last season</div>
         </div>
 
-        {/* Alerts */}
         <div className="card">
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
             <AlertTriangle size={16} color="#eab308" />
             <span style={{ fontWeight: 600, fontSize: 14 }}>Active alerts</span>
           </div>
           <div style={{ fontSize: 13, color: "#6b7280" }}>
-            {alerts.filter(a => a.type !== "green").length > 0
-              ? `${alerts.filter(a => a.type !== "green").length} active alerts requiring attention`
-              : "No active alerts right now"}
+            {alertCount > 0 ? `${alertCount} active alerts requiring attention` : "No active alerts right now"}
           </div>
-          {alerts.filter(a => a.type !== "green").map((a, i) => (
-            <div key={i} style={{ marginTop: 8, fontSize: 12, color: a.type === "red" ? "#dc2626" : "#b45309" }}>
+          {activeAlerts.map((a) => (
+            <div key={a.text} style={{ marginTop: 8, fontSize: 12, color: a.type === "red" ? "#dc2626" : "#b45309" }}>
               {a.icon} {a.text}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Charts row */}
       <div className="grid-2">
-        {/* Soil nutrient chart */}
         <div className="card">
           <div className="section-title">Soil nutrient balance</div>
-          <ResponsiveContainer width="100%" height={180}>
-            <AreaChart data={soilChartData}>
-              <defs>
-                <linearGradient id="colorN" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0.05} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} domain={[0, 100]} />
-              <Tooltip contentStyle={{ borderRadius: 8, border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", fontSize: 12 }} />
-              <Area type="monotone" dataKey="N" stroke="#22c55e" strokeWidth={2.5} fill="url(#colorN)" dot={false} />
-              <Area type="monotone" dataKey="P" stroke="#3b82f6" strokeWidth={2} fill="none" dot={false} />
-              <Area type="monotone" dataKey="K" stroke="#f59e0b" strokeWidth={2} fill="none" dot={false} />
-              <Area type="monotone" dataKey="Moisture" stroke="#8b5cf6" strokeWidth={2} fill="none" dot={false} />
-            </AreaChart>
-          </ResponsiveContainer>
+          <SoilChart data={soilChartData} />
           <div style={{ display: "flex", gap: 12, marginTop: 8, flexWrap: "wrap" }}>
-            {[["#22c55e","N"],["#3b82f6","P"],["#f59e0b","K"],["#8b5cf6","Moisture"]].map(([c,l]) => (
-              <div key={l} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b7280" }}>
-                <div style={{ width: 8, height: 8, borderRadius: 2, background: c }} />
-                {l}
+            {alertLegend.map(l => (
+              <div key={l.label} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b7280" }}>
+                <div style={{ width: 8, height: 8, borderRadius: 2, background: l.color }} />
+                {l.label}
               </div>
             ))}
           </div>
         </div>
 
-        {/* Weekly weather trend */}
         <div className="card">
           <div className="section-title">Weekly weather trend</div>
-          <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={weatherTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} domain={[25, 38]} />
-              <Tooltip contentStyle={{ borderRadius: 8, border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", fontSize: 12 }} formatter={(v: number) => [`${v}°C`, "Temp"]} />
-              <Line type="monotone" dataKey="temp" stroke="#22c55e" strokeWidth={2.5} dot={{ fill: "#22c55e", r: 4 }} activeDot={{ r: 6 }} />
-            </LineChart>
-          </ResponsiveContainer>
+          <WeatherTrendChart data={weatherTrend} />
         </div>
       </div>
 
-      {/* Alert panel */}
       <div className="card" style={{ marginTop: 20 }}>
         <div className="section-title">Recent alerts & notifications</div>
-        {alerts.map((a, i) => (
-          <div key={i} className={`alert-item alert-item-${a.type}`}>
+        {alerts.map((a) => (
+          <div key={a.text} className={`alert-item alert-item-${a.type}`}>
             <span style={{ fontSize: 16 }}>{a.icon}</span>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 500, color: "#1f2937" }}>{a.text}</div>

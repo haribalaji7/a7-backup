@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
-import { Plus, Trash2, DollarSign, TrendingUp, TrendingDown, Receipt } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 interface Transaction {
   id: string;
@@ -222,7 +222,7 @@ export default function FinancePage() {
               tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} />
             <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: "#374151" }} axisLine={false} tickLine={false} width={80} />
             <Tooltip contentStyle={{ borderRadius: 8, border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", fontSize: 12 }}
-              formatter={(v: number) => [`₹${v.toLocaleString("en-IN")}`, "Amount"]} />
+              formatter={(v) => [`₹${Number(v).toLocaleString("en-IN")}`, "Amount"]} />
             <Bar dataKey="value" fill="#ef4444" radius={[0, 4, 4, 0]} maxBarSize={20} />
           </BarChart>
         </ResponsiveContainer>

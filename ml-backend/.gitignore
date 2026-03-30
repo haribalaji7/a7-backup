@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+venv/
+.venv/
+env/
+PlantVillage-Dataset-master/
+disease_model/
+*.h5
+*.pkl
+backend.log
+
+nul

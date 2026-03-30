@@ -1,8 +1,15 @@
 "use client";
-import {
-  RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer,
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip
-} from "recharts";
+import dynamic from "next/dynamic";
+
+const NutrientRadarChart = dynamic(() => import("@/components/NutrientRadarChart"), {
+  ssr: false,
+  loading: () => <div className="skeleton" style={{ height: 240 }} />
+});
+
+const NutrientTrendChart = dynamic(() => import("@/components/NutrientTrendChart"), {
+  ssr: false,
+  loading: () => <div className="skeleton" style={{ height: 240 }} />
+});
 
 const soilProfile = [
   { label: "Nitrogen (N)", value: 78, ideal: "60–90 kg/ha", status: "good", unit: "kg/ha" },
@@ -43,7 +50,6 @@ export default function SoilPage() {
       <div className="page-title">Soil Health Monitor</div>
       <div className="page-subtitle">Real-time soil nutrient analysis and recommendations for optimal crop growth</div>
 
-      {/* Nutrient cards */}
       <div className="grid-3" style={{ marginBottom: 20 }}>
         {soilProfile.map((s) => {
           const pct = Math.min(100, s.label === "pH Level" ? ((s.value - 4) / 4) * 100 : s.label === "Organic C." ? s.value * 30 : s.value);
@@ -67,43 +73,17 @@ export default function SoilPage() {
       </div>
 
       <div className="grid-2" style={{ marginBottom: 20 }}>
-        {/* Radar chart */}
         <div className="card">
           <div className="section-title">Nutrient Balance Radar</div>
-          <ResponsiveContainer width="100%" height={240}>
-            <RadarChart data={radarData}>
-              <PolarGrid stroke="#e5e7eb" />
-              <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12, fill: "#6b7280" }} />
-              <Radar name="Soil" dataKey="A" stroke="#22c55e" fill="#22c55e" fillOpacity={0.25} strokeWidth={2} />
-            </RadarChart>
-          </ResponsiveContainer>
+          <NutrientRadarChart data={radarData} />
         </div>
 
-        {/* Trend */}
         <div className="card">
           <div className="section-title">6-Month Nutrient Trend</div>
-          <ResponsiveContainer width="100%" height={240}>
-            <AreaChart data={trendData}>
-              <defs>
-                <linearGradient id="nGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ borderRadius: 8, border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", fontSize: 12 }} />
-              <Area type="monotone" dataKey="N" stroke="#22c55e" strokeWidth={2} fill="url(#nGrad)" dot={false} />
-              <Area type="monotone" dataKey="P" stroke="#3b82f6" strokeWidth={2} fill="none" dot={false} />
-              <Area type="monotone" dataKey="K" stroke="#f59e0b" strokeWidth={2} fill="none" dot={false} />
-              <Area type="monotone" dataKey="Mo" stroke="#8b5cf6" strokeWidth={2} fill="none" dot={false} />
-            </AreaChart>
-          </ResponsiveContainer>
+          <NutrientTrendChart data={trendData} />
         </div>
       </div>
 
-      {/* Recommendations */}
       <div className="card">
         <div className="section-title">AI Soil Recommendations</div>
         {recommendations.map((r, i) => (

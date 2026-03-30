@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import { MapPin, Target, Loader2, Maximize, Ghost } from 'lucide-react';
+import { MapPin, Target, Loader2, Maximize } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface Step1Props {
@@ -28,7 +28,7 @@ export default function Step1({ data, updateData, onNext }: Step1Props) {
         const result = await res.json();
         const cityOrVillage = result.address.city || result.address.town || result.address.village || result.address.county || "Unknown Location";
         updateData({ location: cityOrVillage });
-      } catch (e) {
+      } catch {
         setError("Failed to fetch location automatically.");
       } finally {
         setLoadingLoc(false);

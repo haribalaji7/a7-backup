@@ -1,0 +1,99 @@
+﻿Γû▓ Next.js 16.2.1 (Turbopack)
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 70s
+  Running TypeScript ...
+node.exe : Failed to type 
+check.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (F  
+  ailed to type check.:   
+ String) [], RemoteExc    
+eption
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+
+./app/analytics/page.tsx:9
+7:17
+Type error: Type '(v: 
+number, n: string) => 
+[string, string]' is not 
+assignable to type 
+'Formatter<ValueType, 
+NameType> & ((value: 
+ValueType, name: 
+NameType, item: 
+TooltipPayloadEntry, 
+index: number, payload: 
+TooltipPayload) => 
+ReactNode | [...])'.
+  Type '(v: number, n: 
+string) => [string, 
+string]' is not 
+assignable to type 
+'Formatter<ValueType, 
+NameType>'.
+    Types of parameters 
+'v' and 'value' are 
+incompatible.
+      Type 'ValueType | 
+undefined' is not 
+assignable to type 
+'number'.
+        Type 'undefined' 
+is not assignable to type 
+'number'.
+
+  [90m 95 |[0m          
+       tickFormatter={v 
+=> [32m`Γé╣[0m${(v/[35m
+1000[0m).toFixed([35m0[
+0m)[32m}k`[0m} />
+  [90m 96 |[0m          
+     <[33mTooltip[0m 
+contentStyle={{ 
+borderRadius: [35m8[0m, 
+border: [32m"none"[0m, 
+boxShadow: [32m"0 
+4px...[0m
+[31m[1m>[0m [90m 97 
+|[0m                 
+formatter={(v: number, n: 
+string) => [[32m`Γé╣[0m$
+{v.toLocaleString([32m"en
+-IN"[0m)[32m}`[0m, 
+n]...
+  [90m    |[0m          
+       [31m[1m^[0m
+  [90m 98 |[0m          
+     <[33mLegend[0m 
+wrapperStyle={{ fontSize: 
+[35m12[0m }} />
+  [90m 99 |[0m          
+     <[33mArea[0m [36mt
+ype[0m=[32m"monotone"[0
+m dataKey=[32m"revenue"[
+0m 
+name=[32m"Revenue"[0m 
+stroke=[32m"#22c55e"[0m 
+str...
+  [90m100 |[0m          
+     <[33mArea[0m [36mt
+ype[0m=[32m"monotone"[0
+m dataKey=[32m"cost"[0m 
+name=[32m"Cost"[0m 
+stroke=[32m"#ef4444"[0m 
+strokeWid...
+Next.js build worker 
+exited with code: 1 and 
+signal: null

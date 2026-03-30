@@ -1,151 +1,268 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Send, Bot, User, Mic, MicOff, Loader2, Volume2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { voiceService, LanguageCode, LANGUAGES } from "../../services/voiceService";
+import { voiceService } from "../../services/voiceService";
 
-interface Msg {
+type LanguageCode = "en" | "ta" | "te" | "ml" | "kn";
+
+interface ChatMessage {
+  id: string;
   role: "user" | "assistant";
   content: string;
   time: string;
 }
 
-const suggestions = [
-  "How do I improve soil moisture?",
-  "Best fertiliser for wheat in March?",
-  "How to prevent early blight?",
-  "When should I irrigate paddy?",
-  "Natural pest control methods?",
-];
-
-const knowledgeBase: Record<string, string> = {
-  moisture: "To improve soil moisture, apply mulching (paddy straw or sugarcane bagasse) 3–5 cm thick. Practise drip irrigation rather than flood irrigation — it saves 40–50% water. Add organic matter like vermicompost to improve water retention capacity.",
-  wheat: "For wheat in March, apply top-dress with urea (25 kg/acre) if plants show yellowing. Ensure irrigation at boot-leaf and grain-filling stages. Watch for yellow rust — spray Propiconazole 25 EC (500 ml/acre) if spotted.",
-  blight: "To prevent early blight (Alternaria solani), rotate crops annually. Avoid overhead irrigation. Apply Mancozeb 75% WP (2 g/L) or Chlorothalonil at 10-day intervals. Remove and destroy infected leaves immediately.",
-  irrigat: "Paddy requires 5–7 cm standing water from transplanting to panicle initiation. Drain fields 7–10 days before harvesting. Mid-season drainage at 30 days after transplanting improves root depth and reduces methane emissions.",
-  pest: "Natural pest control: Neem oil spray (5 ml/L) repels aphids and whiteflies. Release Trichogramma cards (1 card/acre) to control stem borers. Yellow sticky traps control thrips. Intercrop marigold to deter nematodes.",
-  default: "Great question! Based on current conditions — temperature 32°C, humidity 67%, soil moisture at 38% — I recommend monitoring your crops closely this week. For specific advice on fertilisation, irrigation, pest control, or crop selection, just ask. I'm trained on Indian agriculture practices and can assist with Kharif and Rabi season planning.",
+const LANGUAGES: Record<LanguageCode, { name: string; native: string }> = {
+  en: { name: "English", native: "English" },
+  ta: { name: "Tamil", native: "தமிழ்" },
+  te: { name: "Telugu", native: "తెలుగు" },
+  ml: { name: "Malayalam", native: "മലയാളം" },
+  kn: { name: "Kannada", native: "ಕನ್ನಡ" },
 };
 
-function getReply(q: string): string {
-  const lower = q.toLowerCase();
-  for (const key of Object.keys(knowledgeBase)) {
-    if (lower.includes(key)) return knowledgeBase[key];
-  }
-  return knowledgeBase["default"];
-}
+const localizedGreetings: Record<LanguageCode, string> = {
+  en: "Namaste! 🌾 I'm your Smart Agri AI Assistant. I can help with crop management, soil health, pest control, irrigation, and more. How can I assist you today?",
+  ta: "வணக்கம்! 🌾 நான் உங்களின் Smart Agri AI உதவியாளர். பயிர் மேலாண்மை, மண் ஆரோக்கியம், பூச்சி கட்டுப்பாடு, நீர்ப்பாசனம் ஆகியவற்றில் உதவ முடியும். இன்று உங்களுக்கு எப்படி உதவலாம்?",
+  te: "నమస్కారం! 🌾 నేను మీ Smart Agri AI అసిస్టెంట్. పంట నిర్వహణ, నేల ఆరోగ్యం, కీటక నియంత్రణ, ప ిరిగేషన్‌లో సహాయపడగలను. ఈ రోజు మీకు ఎలా సహాయపడగలను?",
+  ml: "നമസ്കാരം! 🌾 ഞാൻ നിങ്ങളുടെ Smart Agri AI സഹായിയാണ്. കൃഷി മാനേജ്മെന്റ്, മണ്ണിന്റെ ആരോഗ്യം, കീട നിയന്ത്രണം, ജലസേചനം എന്നിവയിൽ സഹായിക്കാൻ കഴിയും. ഇന്ന് എങ്ങനെ സഹായിക്കാനാകും?",
+  kn: "ನಮಸ್ಕಾರ! 🌾 ನಾನು ನಿಮ್ಮ Smart Agri AI ಸಹಾಯಕ. ಬೆಳೆ ನಿರ್ವಹಣೆ, ಮಣ್ಣಿನ ಆರೋಗ್ಯ, ಕೀಟ ನಿಯಂತ್ರಣ, ನೀರಾವರಿಯಲ್ಲಿ ಸಹಾಯ ಮಾಡಬಹುದು. ಇಂದು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",
+};
+
+const placeholders: Record<LanguageCode, string> = {
+  en: "Ask about crops, soil, weather, pests…",
+  ta: "பயிர்கள், மண், வானிலை, பூச்சிகள் பற்றி கேளுங்கள்…",
+  te: "పంటలు, నేల, వాతావరణం, కీటకాల గురించి అడుగండి…",
+  ml: "കൃഷി, മണ്ണ്, കാലാവസ്ഥ, കീടങ്ങൾ എന്നിവയെ കുറിച്ച് ചോദിക്കുക…",
+  kn: "ಬೆಳೆ, ಮಣ್ಣು, ಹವಾಮಾನ, ಕೀಟಗಳ ಬಗ್ಗೆ ಕೇಳಿ…",
+};
 
 function formatTime() {
   return new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 }
 
 export default function AssistantPage() {
-  const [messages, setMessages] = useState<Msg[]>([
-    {
-      role: "assistant",
-      content: "Namaste! 🌾 I'm your Smart Agri AI Assistant. I can help with crop management, soil health, pest control, irrigation, and more. How can I assist you today?",
-      time: formatTime(),
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
-  const [typing, setTyping] = useState(false);
-  
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [lang, setLang] = useState<LanguageCode>("en");
   const [micState, setMicState] = useState<"idle" | "listening" | "processing" | "speaking">("idle");
+  const [isRecording, setIsRecording] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [playingMessage, setPlayingMessage] = useState<string | null>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!hasInitialized) {
+      setMessages([{
+        id: Date.now().toString(),
+        role: "assistant",
+        content: localizedGreetings[lang],
+        time: formatTime(),
+      }]);
+      setHasInitialized(true);
+    }
+  }, [lang, hasInitialized]);
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, typing]);
+  }, [messages, isLoading]);
+
+  const placeholder = useMemo(() => placeholders[lang], [lang]);
 
   function showToast(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   }
 
-  function toggleVoice() {
-    if (micState === "listening") {
-      setMicState("processing");
-      voiceService.stopListening(
-        lang,
-        (text) => {
-          setMicState("idle");
-          if (text.trim()) {
-            sendMsg(text, true);
-          }
-        },
-        (err) => {
-          showToast(err);
-          setMicState("idle");
-        },
-        () => {
-          showToast("Offline voice mode enabled");
-        }
-      );
-      return;
+  async function sendToAI(userMessage: string) {
+    const userMsg: ChatMessage = {
+      id: Date.now().toString(),
+      role: "user",
+      content: userMessage,
+      time: formatTime(),
+    };
+
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
+    setIsLoading(true);
+    setError(null);
+
+    const assistantMsgId = (Date.now() + 1).toString();
+    const assistantMsg: ChatMessage = {
+      id: assistantMsgId,
+      role: "assistant",
+      content: "",
+      time: formatTime(),
+    };
+    setMessages([...newMessages, assistantMsg]);
+
+    try {
+      const conversationHistory = newMessages.map(m => ({
+        role: m.role,
+        content: m.content
+      }));
+
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          messages: conversationHistory,
+          language: lang 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to get response");
+      }
+
+      setMessages(prev => prev.map(m => 
+        m.id === assistantMsgId ? { ...m, content: data.message } : m
+      ));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Something went wrong";
+      setError(errorMessage);
+      setMessages(prev => prev.map(m => 
+        m.id === assistantMsgId ? { 
+          ...m, 
+          content: `⚠️ Sorry, I encountered an error: ${errorMessage}` 
+        } : m
+      ));
+    } finally {
+      setIsLoading(false);
     }
-    
+  }
+
+  function sendMsg(text?: string) {
+    const q = (text ?? input).trim();
+    if (!q) return;
+    setInput("");
+    sendToAI(q);
+  }
+
+  async function toggleVoice() {
     if (micState === "speaking") {
-      window.speechSynthesis.cancel();
+      voiceService.stopSpeech();
+      setPlayingMessage(null);
       setMicState("idle");
       return;
     }
 
+    if (isRecording) {
+      setMicState("processing");
+      setIsRecording(false);
+      
+      voiceService.stopListening(lang, (text) => {
+        setMicState("idle");
+        setInput("");
+        if (text.trim()) {
+          sendToAI(text.trim());
+        }
+      }, (err) => {
+        showToast(err);
+        setMicState("idle");
+        setInput("");
+      });
+      return;
+    }
+
+    if (micState === "listening") {
+      voiceService.abortListening();
+      setMicState("idle");
+      setIsRecording(false);
+      setInput("");
+      return;
+    }
+
     setMicState("listening");
+    setIsRecording(true);
+    
     voiceService.startListening(
       lang,
       (text) => {
         setMicState("idle");
+        setIsRecording(false);
+        setInput("");
         if (text.trim()) {
-           sendMsg(text, true);
+          sendToAI(text.trim());
         }
       },
       (err) => {
         showToast(err);
         setMicState("idle");
+        setIsRecording(false);
+        setInput("");
       },
-      () => {
-        showToast("Offline voice mode enabled");
+      (interim) => {
+        setInput(interim);
       }
     );
   }
 
-  function sendMsg(text?: string, isVoice: boolean = false) {
-    const q = (text ?? input).trim();
-    if (!q) return;
-    if (!isVoice) setInput("");
-    
-    const userMsg: Msg = { role: "user", content: q, time: formatTime() };
-    setMessages(prev => [...prev, userMsg]);
-    setTyping(true);
-    
-    if (isVoice) setMicState("processing");
+  const playMessage = async (msgId: string) => {
+    const msg = messages.find(m => m.id === msgId);
+    if (!msg || msg.role === "user" || !msg.content) return;
 
-    setTimeout(() => {
-      const reply = getReply(q);
-      setMessages(prev => [...prev, { role: "assistant", content: reply, time: formatTime() }]);
-      setTyping(false);
+    if (playingMessage === msgId) {
+      voiceService.stopSpeech();
+      setPlayingMessage(null);
+      return;
+    }
 
-      if (isVoice) {
-        setMicState("speaking");
-        voiceService.textToSpeech(reply, lang)
-          .then(() => setMicState("idle"))
-          .catch(() => setMicState("idle"));
-      }
-    }, 1000 + Math.random() * 800);
-  }
+    setPlayingMessage(msgId);
+    
+    try {
+      await voiceService.cloudTextToSpeech(
+        msg.content,
+        lang,
+        () => {},
+        () => setPlayingMessage(null),
+        () => setPlayingMessage(null)
+      );
+    } catch {
+      setPlayingMessage(null);
+    }
+  };
+
+  const clearChat = () => {
+    setMessages([{
+      id: Date.now().toString(),
+      role: "assistant",
+      content: localizedGreetings[lang],
+      time: formatTime(),
+    }]);
+    setError(null);
+  };
 
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 16 }}>
         <div>
           <div className="page-title" style={{ marginBottom: 4 }}>AI Farm Assistant</div>
-          <div className="page-subtitle" style={{ marginBottom: 0 }}>Intelligent crop advisor powered by agriculture expertise — ask anything about your farm</div>
+          <div className="page-subtitle" style={{ marginBottom: 0 }}>
+            Chat with AI powered by GPT-4 • Supports 5 Indian languages
+          </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <span style={{ fontSize: 13, color: "#6b7280", fontWeight: 500 }}>Global Voice AI:</span>
+          <button
+            onClick={clearChat}
+            style={{
+              padding: "6px 12px",
+              borderRadius: "8px",
+              border: "1px solid #e5e7eb",
+              background: "white",
+              color: "#6b7280",
+              fontSize: 12,
+              cursor: "pointer",
+            }}
+          >
+            Clear Chat
+          </button>
           <select
             value={lang}
             onChange={(e) => setLang(e.target.value as LanguageCode)}
@@ -162,18 +279,17 @@ export default function AssistantPage() {
             }}
           >
             {Object.entries(LANGUAGES).map(([code, config]) => (
-              <option key={code} value={code}>{config.name}</option>
+              <option key={code} value={code}>{config.native} ({config.name})</option>
             ))}
           </select>
         </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 20 }}>
-        {/* Chat */}
         <div className="card" style={{ display: "flex", flexDirection: "column", height: 560 }}>
           <div style={{ flex: 1, overflowY: "auto", padding: "4px 0", display: "flex", flexDirection: "column", gap: 12 }}>
-            {messages.map((m, i) => (
-              <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", flexDirection: m.role === "user" ? "row-reverse" : "row" }}>
+            {messages.map((m) => (
+              <div key={m.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", flexDirection: m.role === "user" ? "row-reverse" : "row" }}>
                 <div style={{
                   width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
                   background: m.role === "assistant" ? "#dcfce7" : "#f0f9ff",
@@ -181,7 +297,7 @@ export default function AssistantPage() {
                   position: "relative"
                 }}>
                   {m.role === "assistant" ? <Bot size={16} color="#16a34a" /> : <User size={16} color="#3b82f6" />}
-                  {m.role === "assistant" && micState === "speaking" && i === messages.length - 1 && !typing && (
+                  {m.role === "assistant" && playingMessage === m.id && (
                     <motion.div
                       animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0, 0.5] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
@@ -202,49 +318,57 @@ export default function AssistantPage() {
                     lineHeight: 1.6,
                     border: m.role === "assistant" ? "1px solid #f0f0f0" : "none",
                   }}>
-                    {m.content}
+                    {m.content || (m.role === "assistant" && isLoading ? "Thinking..." : "")}
                   </div>
-                  <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 3, textAlign: m.role === "user" ? "right" : "left" }}>{m.time}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                    <div style={{ fontSize: 10, color: "#9ca3af" }}>{m.time}</div>
+                    {m.role === "assistant" && m.content && (
+                      <button
+                        onClick={() => playMessage(m.id)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                          padding: "2px 8px",
+                          borderRadius: 12,
+                          border: playingMessage === m.id ? "1px solid #22c55e" : "1px solid #e5e7eb",
+                          background: playingMessage === m.id ? "#f0fdf4" : "white",
+                          color: playingMessage === m.id ? "#16a34a" : "#6b7280",
+                          fontSize: 10,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {playingMessage === m.id ? <Volume2 size={12} /> : <Volume2 size={12} />}
+                        {playingMessage === m.id ? "Playing" : "Listen"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
-            {typing && (
-              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Bot size={16} color="#16a34a" />
-                </div>
-                <div style={{ padding: "10px 14px", borderRadius: "4px 12px 12px 12px", background: "#f9fafb", border: "1px solid #f0f0f0" }}>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    {[0, 1, 2].map(j => (
-                      <div key={j} style={{
-                        width: 6, height: 6, borderRadius: "50%", background: "#9ca3af",
-                        animation: `bounce 1.2s ${j * 0.2}s infinite`,
-                      }} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
             <div ref={bottomRef} />
           </div>
 
-          {/* Input */}
           <div style={{ display: "flex", gap: 8, paddingTop: 12, borderTop: "1px solid #f0f0f0", marginTop: 8 }}>
             <input
               className="form-input"
-              placeholder={micState === "listening" ? "Listening..." : "Ask about crops, soil, weather, pests…"}
+              placeholder={isRecording ? "Speaking..." : placeholder}
               value={input}
               onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && sendMsg()}
-              disabled={typing || micState === "listening" || micState === "processing"}
+              onKeyDown={e => e.key === "Enter" && !isRecording && !isLoading && sendMsg()}
+              disabled={isLoading || isRecording}
+              style={{
+                background: isRecording ? "#f0fdf4" : undefined,
+                border: isRecording ? "1px solid #22c55e" : undefined,
+              }}
             />
             
             <button 
               onClick={toggleVoice}
-              disabled={typing && micState !== "speaking" && micState !== "processing"}
+              disabled={isLoading}
               style={{
-                background: micState === "listening" ? "#ef4444" : "#f3f4f6",
-                color: micState === "listening" ? "white" : "#4b5563",
+                background: isRecording ? "#ef4444" : "#f3f4f6",
+                color: isRecording ? "white" : "#4b5563",
                 border: "none",
                 borderRadius: "8px",
                 width: 42,
@@ -252,13 +376,13 @@ export default function AssistantPage() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                cursor: "pointer",
+                cursor: isLoading ? "not-allowed" : "pointer",
+                opacity: isLoading ? 0.5 : 1,
                 transition: "all 0.2s",
                 position: "relative",
               }}
-              title={micState === 'speaking' ? "Stop Speaking" : "Use Voice Input"}
             >
-              {micState === "listening" && (
+              {isRecording && (
                 <motion.div
                   animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0, 0.6] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
@@ -271,42 +395,47 @@ export default function AssistantPage() {
                   }}
                 />
               )}
-              <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {micState === "idle" && <Mic size={18} />}
-                  {micState === "listening" && <MicOff size={18} />}
-                  {micState === "processing" && <Loader2 size={18} className="animate-spin" />}
-                  {micState === "speaking" && <Volume2 size={18} />}
+              <div style={{ position: "relative", zIndex: 1 }}>
+                {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
               </div>
             </button>
 
-            <button className="btn btn-green" onClick={() => sendMsg()} disabled={typing || !input.trim()} style={{ minWidth: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Send size={15} />
+            <button 
+              className="btn btn-green" 
+              onClick={() => sendMsg()}
+              disabled={isLoading || !input.trim() || isRecording}
+              style={{ 
+                minWidth: 42, 
+                height: 42, 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center",
+                opacity: (isLoading || !input.trim() || isRecording) ? 0.5 : 1,
+              }}
+            >
+              {isLoading ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
             </button>
           </div>
 
           <style>{`
-            @keyframes bounce {
-              0%, 60%, 100% { transform: translateY(0); }
-              30% { transform: translateY(-6px); }
-            }
-            .animate-spin {
-              animation: spin 1s linear infinite;
-            }
-            @keyframes spin {
-              from { transform: rotate(0deg); }
-              to { transform: rotate(360deg); }
-            }
+            .animate-spin { animation: spin 1s linear infinite; }
+            @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
           `}</style>
         </div>
 
-        {/* Suggestions panel */}
         <div className="card" style={{ height: "fit-content" }}>
           <div className="section-title">Quick Questions</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {suggestions.map((s, i) => (
+            {[
+              "How do I improve soil moisture?",
+              "Best fertiliser for wheat in March?",
+              "How to prevent early blight?",
+              "When should I irrigate paddy?",
+              "Natural pest control methods?",
+            ].map((q, i) => (
               <button
                 key={i}
-                onClick={() => sendMsg(s)}
+                onClick={() => sendMsg(q)}
                 style={{
                   padding: "9px 12px",
                   textAlign: "left",
@@ -316,19 +445,18 @@ export default function AssistantPage() {
                   fontSize: 12,
                   color: "#15803d",
                   cursor: "pointer",
-                  transition: "all 0.15s",
                   fontFamily: "inherit",
                 }}
-                onMouseEnter={e => { (e.target as HTMLElement).style.background = "#dcfce7"; }}
-                onMouseLeave={e => { (e.target as HTMLElement).style.background = "#f0fdf4"; }}
+                onMouseEnter={e => (e.target as HTMLElement).style.background = "#dcfce7"}
+                onMouseLeave={e => (e.target as HTMLElement).style.background = "#f0fdf4"}
               >
-                🌱 {s}
+                🌱 {q}
               </button>
             ))}
           </div>
 
           <div style={{ marginTop: 20 }}>
-            <div className="section-title">Today's Farm Data</div>
+            <div className="section-title">Today&apos;s Farm Data</div>
             {[
               { label: "Temperature", val: "32°C" },
               { label: "Humidity", val: "67%" },

@@ -1,8 +1,20 @@
 "use client";
-import {
-  BarChart, Bar, LineChart, Line, AreaChart, Area,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
-} from "recharts";
+import dynamic from "next/dynamic";
+
+const YieldChart = dynamic(() => import("@/components/YieldChart"), {
+  ssr: false,
+  loading: () => <div className="skeleton" style={{ height: 220 }} />
+});
+
+const RevenueChart = dynamic(() => import("@/components/RevenueChart"), {
+  ssr: false,
+  loading: () => <div className="skeleton" style={{ height: 220 }} />
+});
+
+const HealthTrendChart = dynamic(() => import("@/components/HealthTrendChart"), {
+  ssr: false,
+  loading: () => <div className="skeleton" style={{ height: 200 }} />
+});
 
 const yieldData = [
   { crop: "Wheat", yield: 3800, target: 4200 },
@@ -41,7 +53,6 @@ export default function AnalyticsPage() {
       <div className="page-title">Farm Analytics</div>
       <div className="page-subtitle">Comprehensive performance metrics, yield analysis and financial insights</div>
 
-      {/* KPI row */}
       <div className="grid-4" style={{ marginBottom: 20 }}>
         {kpiCards.map((k, i) => (
           <div key={i} className="card-sm">
@@ -58,66 +69,20 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid-2" style={{ marginBottom: 20 }}>
-        {/* Yield vs Target */}
         <div className="card">
           <div className="section-title">Crop Yield vs Target (kg/ha)</div>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={yieldData} barGap={4}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="crop" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ borderRadius: 8, border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", fontSize: 12 }} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="yield" name="Actual" fill="#22c55e" radius={[4, 4, 0, 0]} maxBarSize={28} />
-              <Bar dataKey="target" name="Target" fill="#bbf7d0" radius={[4, 4, 0, 0]} maxBarSize={28} />
-            </BarChart>
-          </ResponsiveContainer>
+          <YieldChart data={yieldData} />
         </div>
 
-        {/* Revenue vs Cost */}
         <div className="card">
           <div className="section-title">Revenue vs Cost Trend (₹)</div>
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={monthlyRevenue}>
-              <defs>
-                <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="costGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false}
-                tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} />
-              <Tooltip contentStyle={{ borderRadius: 8, border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", fontSize: 12 }}
-                formatter={(v: number, n: string) => [`₹${v.toLocaleString("en-IN")}`, n]} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#22c55e" strokeWidth={2.5} fill="url(#revGrad)" dot={false} />
-              <Area type="monotone" dataKey="cost" name="Cost" stroke="#ef4444" strokeWidth={2} fill="url(#costGrad)" dot={false} />
-            </AreaChart>
-          </ResponsiveContainer>
+          <RevenueChart data={monthlyRevenue} />
         </div>
       </div>
 
-      {/* Field health trend */}
       <div className="card">
         <div className="section-title">Field Health Score Trend (4 weeks)</div>
-        <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={healthScores}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="week" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} domain={[40, 100]} />
-            <Tooltip contentStyle={{ borderRadius: 8, border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", fontSize: 12 }} />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Line type="monotone" dataKey="Field_A" name="Field A" stroke="#22c55e" strokeWidth={2.5} dot={{ fill: "#22c55e", r: 4 }} />
-            <Line type="monotone" dataKey="Field_B" name="Field B" stroke="#f59e0b" strokeWidth={2.5} dot={{ fill: "#f59e0b", r: 4 }} />
-            <Line type="monotone" dataKey="Field_C" name="Field C" stroke="#ef4444" strokeWidth={2.5} dot={{ fill: "#ef4444", r: 4 }} />
-          </LineChart>
-        </ResponsiveContainer>
+        <HealthTrendChart data={healthScores} />
       </div>
     </div>
   );
