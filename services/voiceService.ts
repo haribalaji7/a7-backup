@@ -2,6 +2,36 @@ import axios from 'axios';
 
 export type LanguageCode = "en" | "ta" | "hi" | "te" | "ml" | "kn";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Types for Web Speech API (to avoid 'any' types)
+// ─────────────────────────────────────────────────────────────────────────────
+interface SpeechRecognitionResultList {
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  length: number;
+  isFinal: boolean;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
 export const LANGUAGES: Record<LanguageCode, { 
   name: string; 
   bcp47: string; 
@@ -71,11 +101,11 @@ export const voiceService = {
     return 'en';
   },
 
-  isBrowserSpeechSupported(): boolean {
-    if (typeof window === 'undefined') return false;
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    return !!SpeechRecognition;
-  },
+   isBrowserSpeechSupported(): boolean {
+     if (typeof window === 'undefined') return false;
+     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+     return !!SpeechRecognition;
+   },
 
   async startListening(
     lang: LanguageCode,
@@ -104,35 +134,35 @@ export const voiceService = {
     let finalTranscript = "";
     let lastInterim = "";
 
-    recognition.onresult = (event: any) => {
-      let interimTranscript = "";
-      
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript + " ";
-          lastInterim = "";
-        } else {
-          interimTranscript += transcript;
-        }
-      }
-      
-      if (interimTranscript && interimTranscript !== lastInterim) {
-        lastInterim = interimTranscript;
-        onInterim?.(interimTranscript);
-      }
-    };
+     recognition.onresult = (event: SpeechRecognitionEvent) => {
+       let interimTranscript = "";
+       
+       for (let i = event.resultIndex; i < event.results.length; i++) {
+         const transcript = event.results[i][0].transcript;
+         if (event.results[i].isFinal) {
+           finalTranscript += transcript + " ";
+           lastInterim = "";
+         } else {
+           interimTranscript += transcript;
+         }
+       }
+       
+       if (interimTranscript && interimTranscript !== lastInterim) {
+         lastInterim = interimTranscript;
+         onInterim?.(interimTranscript);
+       }
+     };
 
-    recognition.onerror = (event: any) => {
-      console.warn("Speech recognition error:", event.error);
-      if (event.error === 'no-speech') {
-        onError("No speech detected. Please speak clearly and try again.");
-      } else if (event.error === 'not-allowed') {
-        onError("Microphone access denied. Please allow microphone access.");
-      } else {
-        onError("Speech recognition error. Please type your question.");
-      }
-    };
+     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+       console.warn("Speech recognition error:", event.error);
+       if (event.error === 'no-speech') {
+         onError("No speech detected. Please speak clearly and try again.");
+       } else if (event.error === 'not-allowed') {
+         onError("Microphone access denied. Please allow microphone access.");
+       } else {
+         onError("Speech recognition error. Please type your question.");
+       }
+     };
 
     recognition.onend = () => {
       if (finalTranscript.trim()) {

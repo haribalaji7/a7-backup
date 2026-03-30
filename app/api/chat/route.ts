@@ -110,7 +110,7 @@ async function callOpenAICompatible(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { messages } = body;
+    const { messages, language } = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json(
@@ -119,8 +119,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Language-specific system prompt instruction - MUST be followed
+    const languageInstruction = language === "en" 
+      ? "" 
+      : `\n\nCRITICAL INSTRUCTION: YOU MUST RESPOND EXCLUSIVELY IN ${language.toUpperCase()} LANGUAGE. ` +
+        `DO NOT USE ENGLISH IN YOUR RESPONSE UNLESS THE USER EXPLICITLY ASKS FOR IT. ` +
+        `If the user's language code is '${language}', you MUST respond in that language. ` +
+        `For Tamil (ta): Respond ONLY in Tamil. ` +
+        `For Hindi (hi): Respond ONLY in Hindi. ` +
+        `For Telugu (te): Respond ONLY in Telugu. ` +
+        `For Malayalam (ml): Respond ONLY in Malayalam. ` +
+        `For Kannada (kn): Respond ONLY in Kannada. ` +
+        `Ignore any other language preferences and respond strictly in ${language}.`;
+
     const conversationHistory = [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: SYSTEM_PROMPT + languageInstruction },
       ...messages.map((m: { role: string; content: string }) => ({
         role: m.role,
         content: m.content,
