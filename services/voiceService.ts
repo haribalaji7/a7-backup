@@ -58,6 +58,16 @@ async function translateText(text: string, targetLang: string): Promise<string> 
 
 export const voiceService = {
   detectLanguage(): LanguageCode {
+    // Try to get language from browser or default to English
+    if (typeof window !== 'undefined') {
+      const lang = navigator.language;
+      if (lang.startsWith('ta')) return 'ta';
+      if (lang.startsWith('hi')) return 'hi';
+      if (lang.startsWith('te')) return 'te';
+      if (lang.startsWith('ml')) return 'ml';
+      if (lang.startsWith('kn')) return 'kn';
+      return 'en'; // Default to English
+    }
     return 'en';
   },
 
@@ -271,8 +281,8 @@ export const voiceService = {
       utterance.pitch = 1;
       utterance.volume = 1;
       
-      utterance.onend = () => onEnd?.();
-      utterance.onerror = () => onEnd?.();
+    utterance.onend = () => onEnd?.();
+    utterance.onerror = (event) => onError?.(`Speech synthesis error: ${event?.error || 'Unknown error'}`);
 
       speechSynthesis.speak(utterance);
     } catch {
@@ -280,34 +290,35 @@ export const voiceService = {
     }
   },
 
-  textToSpeech(text: string, lang: LanguageCode): Promise<void> {
-    return new Promise<void>((resolve) => {
-      if (typeof window === 'undefined') {
-        resolve();
-        return;
-      }
-
-      try {
-        speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = LANGUAGES[lang].bcp47;
-        
-        const voices = speechSynthesis.getVoices();
-        const bcpPrefix = LANGUAGES[lang].bcp47.split('-')[0];
-        const voice = voices.find(v => v.lang.startsWith(bcpPrefix));
-        if (voice) {
-          utterance.voice = voice;
-        }
-        
-        utterance.rate = lang === "en" ? 1.0 : 1.1;
-        utterance.onend = () => resolve();
-        utterance.onerror = () => resolve();
-        speechSynthesis.speak(utterance);
-      } catch {
-        resolve();
-      }
-    });
-  },
+   textToSpeech(text: string, lang: LanguageCode, onError?: (err: string) => void): Promise<void> {
+     return new Promise<void>((resolve) => {
+       if (typeof window === 'undefined') {
+         resolve();
+         return;
+       }
+ 
+       try {
+         speechSynthesis.cancel();
+         const utterance = new SpeechSynthesisUtterance(text);
+         utterance.lang = LANGUAGES[lang].bcp47;
+         
+         const voices = speechSynthesis.getVoices();
+         const bcpPrefix = LANGUAGES[lang].bcp47.split('-')[0];
+         const voice = voices.find(v => v.lang.startsWith(bcpPrefix));
+         if (voice) {
+           utterance.voice = voice;
+         }
+         
+         utterance.rate = lang === "en" ? 1.0 : 1.1;
+         utterance.onend = () => resolve();
+         utterance.onerror = (event) => onError?.(`Speech synthesis error: ${event?.error || 'Unknown error'}`) || resolve();
+         speechSynthesis.speak(utterance);
+       } catch (error) {
+         onError?.(`Text to speech failed: ${error instanceof Error ? error.message : String(error)}`);
+         resolve();
+       }
+     });
+   },
 
   stopSpeech(): void {
     if (currentAudio) {
