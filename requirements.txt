@@ -1,0 +1,13 @@
+streamlit
+folium==0.20.0
+streamlit-folium
+sentinelhub
+rasterio
+numpy
+pillow
+requests
+google-generativeai
+folium.plugins
+branca
+shapely
+pyproj

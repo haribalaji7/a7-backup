@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Send, Bot, User, Mic, MicOff, Loader2, Volume2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { voiceService } from "../../services/voiceService";
+import { voiceService } from "@/services/voiceService";
 
 type LanguageCode = "en" | "ta" | "te" | "ml" | "kn";
 
@@ -72,6 +72,10 @@ export default function AssistantPage() {
   }, [messages, isLoading]);
 
   const placeholder = useMemo(() => placeholders[lang], [lang]);
+
+  useEffect(() => {
+    setInput(placeholders[lang]);
+  }, [lang]);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -265,7 +269,17 @@ export default function AssistantPage() {
           </button>
           <select
             value={lang}
-            onChange={(e) => setLang(e.target.value as LanguageCode)}
+            onChange={(e) => {
+              const newLang = e.target.value as LanguageCode;
+              setLang(newLang);
+              setMessages([{
+                id: Date.now().toString(),
+                role: "assistant",
+                content: localizedGreetings[newLang],
+                time: formatTime(),
+              }]);
+              setInput("");
+            }}
             style={{
               padding: "6px 12px",
               borderRadius: "8px",
@@ -423,37 +437,67 @@ export default function AssistantPage() {
           `}</style>
         </div>
 
-        <div className="card" style={{ height: "fit-content" }}>
-          <div className="section-title">Quick Questions</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {[
-              "How do I improve soil moisture?",
-              "Best fertiliser for wheat in March?",
-              "How to prevent early blight?",
-              "When should I irrigate paddy?",
-              "Natural pest control methods?",
-            ].map((q, i) => (
-              <button
-                key={i}
-                onClick={() => sendMsg(q)}
-                style={{
-                  padding: "9px 12px",
-                  textAlign: "left",
-                  background: "#f0fdf4",
-                  border: "1px solid #bbf7d0",
-                  borderRadius: 8,
-                  fontSize: 12,
-                  color: "#15803d",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                }}
-                onMouseEnter={e => (e.target as HTMLElement).style.background = "#dcfce7"}
-                onMouseLeave={e => (e.target as HTMLElement).style.background = "#f0fdf4"}
-              >
-                🌱 {q}
-              </button>
-            ))}
-          </div>
+           <div className="card" style={{ height: "fit-content" }}>
+           <div className="section-title">{lang === "ta" ? "அவசர் கேள்விகள்" : lang === "te" ? "అవసర ప్రశ్నలు" : lang === "ml" ? "ടെക്ക് ചോദ്യങ്ങൾ" : lang === "kn" ? "ಉತ್ಸಾಹ ಪ್ರಶ್ನೆಗಳು" : "Quick Questions"}</div>
+           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+             {[
+               {
+                 en: "How do I improve soil moisture?",
+                 ta: "மண் நிலאים எப்படி மேம்படுத்தலாம்?",
+                 te: "నేల canales నెదిపు ఎలా మెరుగుపరచాలి?",
+                 ml: "മണ്ണളの湿度 എങ്ങനെയാണ് മെച്ചപ്പെടുത്താൻ?",
+                 kn: "ಮಣ್ಣಿ rainy levelsನdoch ಹೇಗೆ ಪರಿಹರಿಸಬಹುದು?"
+               },
+               {
+                 en: "Best fertiliser for wheat in March?",
+                 ta: "மார்ச் மாதத்தில் Godhumai இனமான உரமை?",
+                 te: "మార్చి Godhumai నtense Україні удобрений?",
+                 ml: "മാർച്ച് മാസംGodhumai ലഭ്യമായ പ്രതികൂലം?",
+                 kn: "ಮಾರ್ಚ್ Godhi ದೈಸಿಕಗ Hollande señores?"
+               },
+               {
+                 en: "How to prevent early blight?",
+                 ta: "வரவேகாலை பிளைட் ఎப்படি தட/",
+                 te: "మొదటి blight నా reoz’arrêter?",
+                 ml: "അര Fitzgerald’s blight പredux എങ്ങനെ?",
+                 kn: "ನ analogous early blight ನ ತ ದ_characters হ বিশ্বাস"
+               },
+               {
+                 en: "When should I irrigate paddy?",
+                 ta: "பயிர்engine kub unix?",
+                 te: "మొదటి พืชsoil Nhay khi nào?",
+                 ml: "വിത്തം hydropower എപ്പോൾ?",
+                 kn: "ಕrieron.varies.വ.Normal"
+               },
+               {
+                 en: "Natural pest control methods?",
+                 ta: "இயாத்திரimprint pests regulation?",
+                 te: "సహజ DDSCs లేదా నైసर्गికاوية?",
+                 ml: "സ്വഭാവികvariant എന്താണ്?",
+                 kn: "ಸೈನ\" εsa ಠ tenido?"
+               }
+             ].map((q, i) => (
+               <button
+                 key={i}
+                 onClick={() => sendMsg(q[lang] || q.en)}
+                 style={{
+                   padding: "9px 12px",
+                   textAlign: "left",
+                   background: "#f0fdf4",
+                   border: "1px solid #bbf7d0",
+                   borderRadius: 8,
+                   fontSize: 12,
+                   color: "#15803d",
+                   cursor: "pointer",
+                   fontFamily: "inherit",
+                 }}
+                 onMouseEnter={e => (e.target as HTMLElement).style.background = "#dcfce7"}
+                 onMouseLeave={e => (e.target as HTMLElement).style.background = "#f0fdf4"}
+               >
+                 🌱 {q[lang] || q.en}
+               </button>
+             ))}
+           </div>
 
           <div style={{ marginTop: 20 }}>
             <div className="section-title">Today&apos;s Farm Data</div>

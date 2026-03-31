@@ -345,3 +345,27 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* Form fields */
+.field { margin-bottom: 16px; }
+.field-label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+.field-input { width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; background: white; color: #1f2937; transition: all 0.2s; }
+.field-input:focus { outline: none; border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.1); }
+.field-input::placeholder { color: #9ca3af; }
+.field-input:hover { border-color: #22c55e; }
+.field-select { width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; background: white; color: #1f2937; cursor: pointer; transition: all 0.2s; }
+.field-select:focus { outline: none; border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.1); }
+.field-select:hover { border-color: #22c55e; }
+
+/* Buttons - Green Link Style */
+.btn-primary { background: transparent; color: #16a34a; font-weight: 600; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; transition: all 0.2s; text-decoration: none; display: inline-block; }
+.btn-primary:hover { color: #15803d; text-decoration: underline; transform: translateY(-1px); }
+.btn-secondary { background: transparent; color: #6b7280; font-weight: 500; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.btn-secondary:hover { color: #374151; text-decoration: underline; transform: translateY(-1px); }
+.btn-option { padding: 8px 12px; border: none; border-radius: 6px; background: transparent; color: #16a34a; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+.btn-option:hover { text-decoration: underline; transform: translateY(-1px); }
+.btn-option.active { color: #15803d; font-weight: 600; text-decoration: underline; transform: translateY(-1px); }
+
+/* Form card hover */
+.card { transition: box-shadow 0.2s; }
+.card:hover { box-shadow: 0 4px 20px rgba(34,197,94,0.1); }

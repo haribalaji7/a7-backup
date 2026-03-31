@@ -64,6 +64,9 @@ export default function FarmMapPage() {
       
       if (data.success) {
         setResult(data);
+      } else if (data.error === "water_location") {
+        setError(data.message);
+        setResult(null);
       } else {
         throw new Error(data.error || "Analysis failed");
       }

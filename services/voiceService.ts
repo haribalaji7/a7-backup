@@ -307,7 +307,7 @@ export const voiceService = {
         utterance.voice = voice;
       }
       
-      utterance.rate = lang === "en" ? 1.0 : 1.1;
+      utterance.rate = lang === "en" ? 1.4 : 1.5;
       utterance.pitch = 1;
       utterance.volume = 1;
       
@@ -339,7 +339,7 @@ export const voiceService = {
            utterance.voice = voice;
          }
          
-         utterance.rate = lang === "en" ? 1.0 : 1.1;
+         utterance.rate = lang === "en" ? 1.4 : 1.5;
          utterance.onend = () => resolve();
          utterance.onerror = (event) => onError?.(`Speech synthesis error: ${event?.error || 'Unknown error'}`) || resolve();
          speechSynthesis.speak(utterance);

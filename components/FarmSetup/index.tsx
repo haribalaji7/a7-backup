@@ -2,9 +2,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, Sparkles, CheckCircle2, ShieldCheck, Database } from 'lucide-react';
+import { CheckCircle2, ChevronRight, MapPin, Layers, Sprout } from 'lucide-react';
 
-import SidebarNav from './SidebarNav';
 import Step1 from './Step1';
 import Step2 from './Step2';
 import Step3 from './Step3';
@@ -15,13 +14,21 @@ export type WizardData = {
   soilType: string;
   season: string;
   previousCrop: string;
+  lat?: number;
+  lng?: number;
+  crop?: string;
 };
+
+const steps = [
+  { id: 1, title: "Location", icon: MapPin },
+  { id: 2, title: "Crop & Soil", icon: Layers },
+  { id: 3, title: "History", icon: Sprout },
+];
 
 export default function FarmSetupWizard() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
-  const [toast, setToast] = useState<string | null>(null);
-  const [isReady] = useState(true);
+  const [completed, setCompleted] = useState(false);
 
   const [data, setData] = useState<WizardData>({
     location: "",
@@ -29,6 +36,9 @@ export default function FarmSetupWizard() {
     soilType: "",
     season: "",
     previousCrop: "",
+    lat: undefined,
+    lng: undefined,
+    crop: undefined,
   });
 
   const updateData = (newData: Partial<WizardData>) => {
@@ -42,116 +52,108 @@ export default function FarmSetupWizard() {
     if (typeof window !== 'undefined') {
        localStorage.setItem('farm_setup_data', JSON.stringify(data));
     }
-    
-    setToast("Farm intelligence synchronized successfully.");
-    
+    setCompleted(true);
     setTimeout(() => {
        router.push("/");
-    }, 2000);
+    }, 1500);
   };
 
-  if (!isReady) return null;
-
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-6 bg-[#020202] text-white selection:bg-green-500/30 font-sans tracking-tight overflow-hidden relative">
-       
-      {/* Immersive Bokeh Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 opacity-40">
-        <motion.div 
-          animate={{ scale: [1, 1.2, 1], x: [0, 50, 0], y: [0, -30, 0] }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] bg-emerald-900/40 blur-[150px] rounded-full" 
-        />
-        <motion.div 
-          animate={{ scale: [1.1, 1, 1.1], x: [0, -40, 0], y: [0, 60, 0] }}
-          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-          className="absolute -bottom-[10%] -right-[5%] w-[50%] h-[50%] bg-green-950/40 blur-[120px] rounded-full" 
-        />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.8)_100%)] z-10" />
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)' }}>
+      <div className="page-title">Farm Setup</div>
+      <p className="page-subtitle">Configure your farm details for AI-powered analysis</p>
+
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 24 }}>
+        {steps.map((step, idx) => {
+          const Icon = step.icon;
+          return (
+            <div key={step.id} style={{ display: 'flex', alignItems: 'center' }}>
+              <div 
+                onClick={() => step.id < currentStep && (step.id === 1 ? prevStep() : step.id === 2 ? setCurrentStep(2) : setCurrentStep(3))}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 8,
+                  padding: '10px 16px',
+                  borderRadius: 8,
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: step.id < currentStep ? 'pointer' : 'default',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  if (step.id < currentStep) {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(34,197,94,0.2)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <Icon size={16} style={{ color: currentStep >= step.id ? '#16a34a' : '#9ca3af' }} />
+                <span style={{ 
+                  fontSize: 13, 
+                  fontWeight: 600, 
+                  color: currentStep >= step.id ? '#16a34a' : '#9ca3af' 
+                }}>{step.title}</span>
+              </div>
+              {idx < steps.length - 1 && (
+                <ChevronRight size={16} style={{ color: '#9ca3af', margin: '0 4px' }} />
+              )}
+            </div>
+          );
+        })}
       </div>
 
-      <motion.div 
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-[1040px] h-[640px] bg-white/[0.03] backdrop-blur-[40px] border border-white/10 rounded-[40px] shadow-[0_40px_100px_rgba(0,0,0,0.8)] flex overflow-hidden relative z-20"
-      >
-        {/* Left Interactive Sidebar */}
-        <div className="w-[300px] bg-white/[0.02] border-r border-white/5 p-8 flex flex-col relative overflow-hidden">
-          <div className="mb-10 flex items-center gap-3">
-             <div className="w-10 h-10 bg-green-500 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.4)]">
-                <Bot className="text-black" size={24} />
-             </div>
-             <div>
-                <h2 className="font-extrabold text-sm tracking-widest text-white leading-none">AGRI-OS</h2>
-                <p className="text-[10px] text-green-500 font-bold tracking-tighter uppercase mt-1">v2.4 Core</p>
-             </div>
-          </div>
-
-          <SidebarNav currentStep={currentStep} />
-
-          <div className="mt-auto space-y-4">
-             <div className="p-4 rounded-3xl bg-white/[0.03] border border-white/5">
-                <div className="flex items-center gap-2 mb-2">
-                   <ShieldCheck className="text-blue-400" size={14} />
-                   <span className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Privacy Secured</span>
-                </div>
-                <p className="text-[11px] text-white/20 leading-relaxed">End-to-end encrypted satellite data synchronization for your farm.</p>
-             </div>
-          </div>
-        </div>
-
-        {/* Right Dynamic Form Area */}
-        <div className="flex-1 p-12 flex flex-col relative overflow-hidden">
-          
-          <div className="absolute top-12 right-12 flex gap-4 opacity-20 pointer-events-none">
-             <Database size={24} />
-             <Sparkles size={24} />
-          </div>
-
-          <div className="relative z-10 flex-1">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentStep}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="h-full"
-              >
-                {currentStep === 1 && (
-                  <Step1 data={data} updateData={updateData} onNext={nextStep} />
-                )}
-                {currentStep === 2 && (
-                  <Step2 data={data} updateData={updateData} onNext={nextStep} onBack={prevStep} />
-                )}
-                {currentStep === 3 && (
-                  <Step3 data={data} updateData={updateData} onSubmit={completeSetup} onBack={prevStep} />
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-        </div>
-      </motion.div>
-
-      {/* Completion Toast Notification */}
-      <AnimatePresence>
-        {toast && (
+      <div className="card" style={{ padding: 24, maxWidth: 500, margin: '0 auto' }}>
+        <AnimatePresence mode="wait">
           <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-12 bg-white text-black p-4 px-8 rounded-full shadow-[0_20px_50px_rgba(34,197,94,0.4)] z-[100] flex items-center gap-4 border border-green-500/50"
+            key={currentStep}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
           >
-            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-              <CheckCircle2 size={16} className="text-white" />
-            </div>
-            <span className="font-bold text-sm tracking-tight">{toast}</span>
+            {currentStep === 1 && (
+              <Step1 data={data} updateData={updateData} onNext={nextStep} />
+            )}
+            {currentStep === 2 && (
+              <Step2 data={data} updateData={updateData} onNext={nextStep} onBack={prevStep} />
+            )}
+            {currentStep === 3 && (
+              <Step3 data={data} updateData={updateData} onSubmit={completeSetup} onBack={prevStep} />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      <AnimatePresence>
+        {completed && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              position: 'fixed',
+              bottom: 24,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: '#22c55e',
+              color: '#fff',
+              padding: '12px 24px',
+              borderRadius: 8,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}
+          >
+            <CheckCircle2 size={18} />
+            Setup complete!
           </motion.div>
         )}
       </AnimatePresence>
-
     </div>
   );
 }
