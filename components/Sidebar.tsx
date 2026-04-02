@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Home, ScanLine, Leaf, Cloud, BarChart2, Map, Satellite, MessageSquare, DollarSign
+  Home, ScanLine, Leaf, Cloud, BarChart2, Map, Satellite, MessageSquare, DollarSign, TrendingUp
 } from "lucide-react";
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
   { label: "Scan", icon: ScanLine, href: "/scan" },
   { label: "Soil", icon: Leaf, href: "/soil" },
   { label: "Weather", icon: Cloud, href: "/weather" },
+  { label: "Crop Prices", icon: TrendingUp, href: "/crop-price" },
   { label: "Analytics", icon: BarChart2, href: "/analytics" },
   { label: "Map", icon: Map, href: "/farm-map" },
   { label: "Satellite", icon: Satellite, href: "/satellite" },
