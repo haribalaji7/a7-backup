@@ -3,25 +3,21 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { bbox, crop_type, field_name } = body;
+    const { latitude, longitude } = body;
 
-    if (!bbox || !Array.isArray(bbox) || bbox.length !== 4) {
+    if (latitude === undefined || longitude === undefined) {
       return NextResponse.json(
-        { error: "bbox must be [min_lon, min_lat, max_lon, max_lat]" },
+        { error: "latitude and longitude are required" },
         { status: 400 }
       );
     }
 
     const backendUrl = process.env.ML_BACKEND_URL || "http://localhost:8000";
-    const response = await fetch(`${backendUrl}/analyze/ndvi`, {
+    const response = await fetch(`${backendUrl}/analyze/location`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        bbox,
-        crop_type: crop_type || "Unknown",
-        field_name: field_name || "Field",
-      }),
-      signal: AbortSignal.timeout(60_000),
+      body: JSON.stringify({ latitude, longitude }),
+      signal: AbortSignal.timeout(30_000),
     });
 
     if (!response.ok) {

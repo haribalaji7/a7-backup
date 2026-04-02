@@ -45,7 +45,7 @@ export default function FarmMapPage() {
     setResult(null);
 
     try {
-      const response = await fetch("http://localhost:8000/analyze/location", {
+      const response = await fetch("/api/map/analyze", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
