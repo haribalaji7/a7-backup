@@ -1,8 +1,8 @@
 "use client";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Image from "next/image";
 import axios from "axios";
-import { Upload, ScanLine, Leaf, AlertTriangle, Sprout, Loader2 } from "lucide-react";
+import { Upload, ScanLine, Leaf, AlertTriangle, Sprout, Loader2, Camera, X, RefreshCw } from "lucide-react";
 
 const mockResults: Record<string, { disease: string; confidence: number; severity: string; treatment: string; prevention: string }> = {
   default: {
@@ -76,17 +76,74 @@ interface DiseaseResult {
   category?: string;
   top_predictions?: { disease: string; confidence: number }[];
   is_mock?: boolean;
+  is_plant?: boolean;
+  error?: string;
 }
 
 function DiseaseScanner() {
   const [image, setImage] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<DiseaseResult | null>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState("");
+  const [validationError, setValidationError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  async function handleFile(file: File) {
-    const url = URL.createObjectURL(file);
-    setImage(url);
+  useEffect(() => {
+    if (isCameraOpen && videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [isCameraOpen, stream]);
+
+  const openCamera = async () => {
+    try {
+      setCameraError("");
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: "environment" } 
+      });
+      setStream(mediaStream);
+      setIsCameraOpen(true);
+    } catch (err) {
+      setCameraError("Unable to access camera. Please ensure camera permissions are granted.");
+    }
+  };
+
+  const closeCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setStream(null);
+    setIsCameraOpen(false);
+  };
+
+  const captureImage = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    
+    ctx.drawImage(video, 0, 0);
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
+        const url = URL.createObjectURL(blob);
+        setImage(url);
+        closeCamera();
+        processImageFile(file);
+      }
+    }, "image/jpeg");
+  };
+
+  async function processImageFile(file: File) {
+    setValidationError("");
     setResult(null);
     setScanning(true);
     
@@ -99,6 +156,13 @@ function DiseaseScanner() {
       });
       
       setScanning(false);
+      
+      if (response.data.is_plant === false || response.data.error === "not_a_plant") {
+        setValidationError(response.data.message || "The uploaded image does not appear to be a crop or plant leaf. Please scan a valid plant.");
+        setResult(null);
+        return;
+      }
+      
       setResult({
         disease: response.data.disease,
         confidence: response.data.confidence,
@@ -109,6 +173,7 @@ function DiseaseScanner() {
         category: response.data.category,
         top_predictions: response.data.top_predictions,
         is_mock: response.data.is_mock,
+        is_plant: response.data.is_plant,
       });
     } catch {
       console.warn("Disease detection backend unavailable (Network Error). Using mock fallback.");
@@ -117,11 +182,24 @@ function DiseaseScanner() {
     }
   }
 
+  async function handleFile(file: File) {
+    const url = URL.createObjectURL(file);
+    setImage(url);
+    await processImageFile(file);
+  }
+
   function onDrop(e: React.DragEvent) {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith("image/")) handleFile(file);
   }
+
+  const resetScanner = () => {
+    setImage(null);
+    setResult(null);
+    setValidationError("");
+    if (inputRef.current) inputRef.current.value = "";
+  };
 
   const isHealthy = result?.category === "healthy" || result?.disease?.toLowerCase().includes("healthy");
 
@@ -140,58 +218,118 @@ function DiseaseScanner() {
       <div className="grid-2">
         <div className="card">
           <div className="section-title">Upload Crop Image</div>
-          <div
-            onDrop={onDrop}
-            onDragOver={e => e.preventDefault()}
-            onClick={() => inputRef.current?.click()}
-            style={{
-              border: "2px dashed #86efac",
-              borderRadius: 10,
-              minHeight: 220,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              background: "#f0fdf4",
-              transition: "all 0.15s",
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            {image ? (
-              <Image src={image} alt="crop" width={400} height={220} style={{ width: "100%", height: 220, objectFit: "cover", borderRadius: 8 }} />
-            ) : (
-              <div style={{ textAlign: "center", padding: 24 }}>
-                <Upload size={36} color="#22c55e" style={{ marginBottom: 12 }} />
-                <div style={{ fontSize: 14, fontWeight: 600, color: "#15803d", marginBottom: 4 }}>
-                  Drag & drop or click to upload
-                </div>
-                <div style={{ fontSize: 12, color: "#9ca3af" }}>Supports JPG, PNG (max 10MB)</div>
+          
+          {isCameraOpen ? (
+            <div style={{ position: "relative", borderRadius: 10, overflow: "hidden", background: "#000" }}>
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{ width: "100%", height: 220, objectFit: "cover" }}
+              />
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: 12, background: "linear-gradient(transparent, rgba(0,0,0,0.7))", display: "flex", gap: 8 }}>
+                <button
+                  onClick={captureImage}
+                  style={{ flex: 1, padding: 10, borderRadius: 8, border: "none", background: "#22c55e", color: "white", fontWeight: 600, cursor: "pointer" }}
+                >
+                  <Camera size={16} style={{ marginRight: 6 }} /> Capture
+                </button>
+                <button
+                  onClick={closeCamera}
+                  style={{ padding: 10, borderRadius: 8, border: "none", background: "#ef4444", color: "white", fontWeight: 600, cursor: "pointer" }}
+                >
+                  <X size={16} />
+                </button>
               </div>
-            )}
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
-            />
-          </div>
-
-          {image && (
-            <button
-              className="btn btn-green"
-              style={{ marginTop: 12, width: "100%" }}
-              onClick={async () => {
-                if (!inputRef.current?.files?.[0]) return;
-                await handleFile(inputRef.current.files[0]);
+            </div>
+          ) : (
+            <div
+              onDrop={onDrop}
+              onDragOver={e => e.preventDefault()}
+              onClick={() => inputRef.current?.click()}
+              style={{
+                border: "2px dashed #86efac",
+                borderRadius: 10,
+                minHeight: 220,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                background: "#f0fdf4",
+                transition: "all 0.15s",
+                position: "relative",
+                overflow: "hidden",
               }}
-              disabled={scanning}
             >
-              <ScanLine size={15} />
-              {scanning ? "Analysing…" : "Run AI Scan"}
-            </button>
+              {image ? (
+                <Image src={image} alt="crop" width={400} height={220} style={{ width: "100%", height: 220, objectFit: "cover", borderRadius: 8 }} />
+              ) : (
+                <div style={{ textAlign: "center", padding: 24 }}>
+                  <Upload size={36} color="#22c55e" style={{ marginBottom: 12 }} />
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#15803d", marginBottom: 4 }}>
+                    Drag & drop or click to upload
+                  </div>
+                  <div style={{ fontSize: 12, color: "#9ca3af" }}>Supports JPG, PNG (max 10MB)</div>
+                </div>
+              )}
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+              />
+            </div>
+          )}
+
+          {!isCameraOpen && (
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button
+                className="btn btn-outline"
+                style={{ flex: 1 }}
+                onClick={openCamera}
+              >
+                <Camera size={15} />
+                Open Camera
+              </button>
+              {image && (
+                <button
+                  className="btn btn-green"
+                  style={{ flex: 1 }}
+                  onClick={async () => {
+                    if (!inputRef.current?.files?.[0]) return;
+                    await handleFile(inputRef.current.files[0]);
+                  }}
+                  disabled={scanning}
+                >
+                  <ScanLine size={15} />
+                  {scanning ? "Analysing…" : "Run AI Scan"}
+                </button>
+              )}
+            </div>
+          )}
+
+          {validationError && (
+            <div style={{ marginTop: 12, padding: 16, background: "#fef2f2", borderRadius: 8, border: "1px solid #fecaca" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <AlertTriangle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#dc2626", marginBottom: 4 }}>
+                    Error: Not a Plant Image
+                  </div>
+                  <div style={{ fontSize: 13, color: "#991b1b" }}>{validationError}</div>
+                  <button
+                    onClick={resetScanner}
+                    style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: "#dc2626", color: "white", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 500 }}
+                  >
+                    <RefreshCw size={14} />
+                    Try Again
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
 
           {scanning && (
@@ -203,87 +341,106 @@ function DiseaseScanner() {
             </div>
           )}
 
+          <canvas ref={canvasRef} style={{ display: "none" }} />
           <style>{`@keyframes progress { from { width: 0% } to { width: 100% } }`}</style>
         </div>
 
         <div className="card">
           <div className="section-title">Detection Result</div>
-          {!result && !scanning && (
-            <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af" }}>
-              <Leaf size={40} style={{ margin: "0 auto 12px", opacity: 0.4 }} />
-              <div style={{ fontSize: 13 }}>Upload an image to see the scan result</div>
+          {validationError ? (
+            <div style={{ textAlign: "center", padding: "40px 0" }}>
+              <AlertTriangle size={48} color="#dc2626" style={{ margin: "0 auto 16px" }} />
+              <div style={{ fontSize: 16, fontWeight: 600, color: "#dc2626", marginBottom: 8 }}>
+                Unable to Analyze Image
+              </div>
+              <div style={{ fontSize: 13, color: "#991b1b", marginBottom: 20 }}>
+                The uploaded image does not appear to be a crop or plant leaf. Please scan a valid plant.
+              </div>
+              <button onClick={resetScanner} className="btn btn-outline">
+                <RefreshCw size={15} />
+                Try Again
+              </button>
             </div>
-          )}
-          {scanning && (
-            <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af" }}>
-              <ScanLine size={40} style={{ margin: "0 auto 12px", opacity: 0.6, color: "#22c55e" }} />
-              <div style={{ fontSize: 13 }}>Running AI analysis…</div>
-            </div>
-          )}
-          {result && !scanning && (
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                {isHealthy ? (
-                  <Leaf size={20} color="#22c55e" />
-                ) : (
-                  <AlertTriangle size={20} color="#eab308" />
-                )}
-                <div style={{ fontSize: 16, fontWeight: 700, color: isHealthy ? "#166534" : "#1f2937" }}>{result.disease}</div>
-              </div>
-
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-                {result.crop && (
-                  <span style={{
-                    background: "#dbeafe", color: "#1e40af",
-                    padding: "2px 10px", borderRadius: 4, fontSize: 11, fontWeight: 600,
-                  }}>🌿 {result.crop}</span>
-                )}
-                <span className="badge badge-yellow">Confidence: {result.confidence}%</span>
-                <span className={`badge ${isHealthy ? "badge-green" : "badge-yellow"}`}>Severity: {result.severity}</span>
-                {result.category && result.category !== "unknown" && (
-                  <span style={{
-                    background: categoryColors[result.category]?.bg || "#f3f4f6",
-                    color: categoryColors[result.category]?.text || "#374151",
-                    padding: "2px 10px", borderRadius: 4, fontSize: 11, fontWeight: 600, textTransform: "capitalize",
-                  }}>{result.category}</span>
-                )}
-                {result.is_mock && (
-                  <span style={{
-                    background: "#fef3c7", color: "#92400e",
-                    padding: "2px 10px", borderRadius: 4, fontSize: 11, fontWeight: 600,
-                  }}>⚠ Demo Mode</span>
-                )}
-              </div>
-
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Treatment</div>
-                <div style={{ fontSize: 13, color: "#4b5563", background: isHealthy ? "#f0fdf4" : "#fef9c3", padding: "10px 12px", borderRadius: 8 }}>{result.treatment}</div>
-              </div>
-
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Prevention</div>
-                <div style={{ fontSize: 13, color: "#4b5563", background: "#f0fdf4", padding: "10px 12px", borderRadius: 8 }}>{result.prevention}</div>
-              </div>
-
-              {result.top_predictions && result.top_predictions.length > 1 && (
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 8 }}>Top Predictions</div>
-                  {result.top_predictions.map((pred, idx) => (
-                    <div key={idx} style={{
-                      display: "flex", justifyContent: "space-between", alignItems: "center",
-                      padding: "6px 10px", background: idx === 0 ? "#f0fdf4" : "#fafafa",
-                      borderRadius: 6, marginBottom: 4, fontSize: 12,
-                      border: idx === 0 ? "1px solid #bbf7d0" : "1px solid #f3f4f6",
-                    }}>
-                      <span style={{ color: "#374151", fontWeight: idx === 0 ? 600 : 400 }}>
-                        {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"} {pred.disease}
-                      </span>
-                      <span style={{ color: "#6b7280", fontWeight: 600 }}>{pred.confidence}%</span>
-                    </div>
-                  ))}
+          ) : (
+            <>
+              {!result && !scanning && (
+                <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af" }}>
+                  <Leaf size={40} style={{ margin: "0 auto 12px", opacity: 0.4 }} />
+                  <div style={{ fontSize: 13 }}>Upload an image to see the scan result</div>
                 </div>
               )}
-            </div>
+              {scanning && (
+                <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af" }}>
+                  <ScanLine size={40} style={{ margin: "0 auto 12px", opacity: 0.6, color: "#22c55e" }} />
+                  <div style={{ fontSize: 13 }}>Running AI analysis…</div>
+                </div>
+              )}
+              {result && !scanning && (
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                    {isHealthy ? (
+                      <Leaf size={20} color="#22c55e" />
+                    ) : (
+                      <AlertTriangle size={20} color="#eab308" />
+                    )}
+                    <div style={{ fontSize: 16, fontWeight: 700, color: isHealthy ? "#166534" : "#1f2937" }}>{result.disease}</div>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+                    {result.crop && (
+                      <span style={{
+                        background: "#dbeafe", color: "#1e40af",
+                        padding: "2px 10px", borderRadius: 4, fontSize: 11, fontWeight: 600,
+                      }}>🌿 {result.crop}</span>
+                    )}
+                    <span className="badge badge-yellow">Confidence: {result.confidence}%</span>
+                    <span className={`badge ${isHealthy ? "badge-green" : "badge-yellow"}`}>Severity: {result.severity}</span>
+                    {result.category && result.category !== "unknown" && (
+                      <span style={{
+                        background: categoryColors[result.category]?.bg || "#f3f4f6",
+                        color: categoryColors[result.category]?.text || "#374151",
+                        padding: "2px 10px", borderRadius: 4, fontSize: 11, fontWeight: 600, textTransform: "capitalize",
+                      }}>{result.category}</span>
+                    )}
+                    {result.is_mock && (
+                      <span style={{
+                        background: "#fef3c7", color: "#92400e",
+                        padding: "2px 10px", borderRadius: 4, fontSize: 11, fontWeight: 600,
+                      }}>⚠ Demo Mode</span>
+                    )}
+                  </div>
+
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Treatment</div>
+                    <div style={{ fontSize: 13, color: "#4b5563", background: isHealthy ? "#f0fdf4" : "#fef9c3", padding: "10px 12px", borderRadius: 8 }}>{result.treatment}</div>
+                  </div>
+
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Prevention</div>
+                    <div style={{ fontSize: 13, color: "#4b5563", background: "#f0fdf4", padding: "10px 12px", borderRadius: 8 }}>{result.prevention}</div>
+                  </div>
+
+                  {result.top_predictions && result.top_predictions.length > 1 && (
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 8 }}>Top Predictions</div>
+                      {result.top_predictions.map((pred, idx) => (
+                        <div key={idx} style={{
+                          display: "flex", justifyContent: "space-between", alignItems: "center",
+                          padding: "6px 10px", background: idx === 0 ? "#f0fdf4" : "#fafafa",
+                          borderRadius: 6, marginBottom: 4, fontSize: 12,
+                          border: idx === 0 ? "1px solid #bbf7d0" : "1px solid #f3f4f6",
+                        }}>
+                          <span style={{ color: "#374151", fontWeight: idx === 0 ? 600 : 400 }}>
+                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"} {pred.disease}
+                          </span>
+                          <span style={{ color: "#6b7280", fontWeight: 600 }}>{pred.confidence}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -298,11 +455,52 @@ function DiseaseScanner() {
           ].map((t, i) => (
             <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
               <span style={{ fontSize: 22 }}>{t.icon}</span>
-              <span style={{ fontSize: 13, color: "#6b7280" }}>{t.tip}</span>
+              <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{t.tip}</span>
             </div>
           ))}
         </div>
       </div>
+
+      <style>{`
+        .tab-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 20px;
+          border-radius: 10;
+          font-size: 14px;
+          font-weight: 600;
+          border: 2px solid #e5e7eb;
+          background: #fff;
+          color: #6b7280;
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+        .tab-btn:hover {
+          border-color: #22c55e;
+          color: #22c55e;
+        }
+        .tab-btn-active {
+          background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+          border-color: #22c55e;
+          color: #fff;
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .badge-blue {
+          background: #dbeafe;
+          color: #1e40af;
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: 600;
+        }
+      `}</style>
     </>
   );
 }
@@ -337,7 +535,7 @@ function CropRecommender() {
       });
       setResult(response.data);
     } catch (err) {
-      setError("Failed to get recommendations. Make sure the ML backend is running on port 8000.");
+      setError("Failed to get recommendations. Make sure the ML backend is running on port 8001.");
       console.warn("Crop prediction backend unavailable:", err);
     } finally {
       setLoading(false);

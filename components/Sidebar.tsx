@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
-  Home, ScanLine, Leaf, Cloud, BarChart2, Map, Satellite, MessageSquare, DollarSign, TrendingUp
+  Home, ScanLine, Leaf, Cloud, BarChart2, Map, Satellite, MessageSquare, DollarSign, TrendingUp, Sun, Moon, LogOut, MessageCircle, Phone
 } from "lucide-react";
+import { useTheme } from "./ThemeProvider";
 
 const navItems = [
   { label: "Home", icon: Home, href: "/" },
@@ -15,12 +16,21 @@ const navItems = [
   { label: "Map", icon: Map, href: "/farm-map" },
   { label: "Satellite", icon: Satellite, href: "/satellite" },
   { label: "Assistant", icon: MessageSquare, href: "/assistant" },
+  { label: "Helpline", icon: Phone, href: "/helpline" },
   { label: "Finance", icon: DollarSign, href: "/finance" },
   { label: "Farm Setup", icon: Leaf, href: "/setup" },
+  { label: "Feedback", icon: MessageCircle, href: "/feedback" },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
+
+  const handleLogout = () => {
+    localStorage.removeItem("isAuthenticated");
+    router.push("/login");
+  };
 
   return (
     <aside className="sidebar">
@@ -50,6 +60,17 @@ export default function Sidebar() {
           );
         })}
       </nav>
+
+      <div className="sidebar-footer">
+        <button onClick={toggleTheme} className="sidebar-footer-btn" title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
+          {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+          <span>{theme === "light" ? "Dark Mode" : "Light Mode"}</span>
+        </button>
+        <button onClick={handleLogout} className="sidebar-footer-btn logout-btn" title="Logout">
+          <LogOut size={16} />
+          <span>Logout</span>
+        </button>
+      </div>
     </aside>
   );
 }

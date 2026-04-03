@@ -165,19 +165,19 @@ export default function HomePage() {
       )}
 
       {setupData && (
-        <div className="card" style={{ marginBottom: 24, background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
+        <div className="card" style={{ marginBottom: 24, background: "var(--bg-page)", border: "1px solid var(--border-color)" }}>
           <div style={{ display: "flex", gap: 32 }}>
             <div>
               <div className="stat-label">Farm Location</div>
-              <div style={{ fontWeight: 600, color: "#16a34a" }}>{setupData.location}</div>
+              <div style={{ fontWeight: 600, color: "var(--green-primary)" }}>{setupData.location}</div>
             </div>
             <div>
               <div className="stat-label">Soil Profile</div>
-              <div style={{ fontWeight: 600, color: "#16a34a" }}>{setupData.soilType} Soil</div>
+              <div style={{ fontWeight: 600, color: "var(--green-primary)" }}>{setupData.soilType} Soil</div>
             </div>
             <div>
               <div className="stat-label">Area</div>
-              <div style={{ fontWeight: 600, color: "#16a34a" }}>{setupData.landArea} Acres</div>
+              <div style={{ fontWeight: 600, color: "var(--green-primary)" }}>{setupData.landArea} Acres</div>
             </div>
           </div>
         </div>

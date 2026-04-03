@@ -336,6 +336,50 @@ DISEASE_KNOWLEDGE = {
 disease_model = None
 class_names = None
 class_names_json = None
+mobilenet_model = None
+
+# Keywords that indicate plant/leaf images in ImageNet
+PLANT_KEYWORDS = [
+    "leaf", "plant", "flower", "rose", "daisy", "dandelion", "tulip", "orchid",
+    "tree", "grass", "shrub", "fern", "palm", "cactus", "succulent", "pot",
+    "houseplant", "garden", "crop", "vegetable", "fruit", "seed", "seedling",
+    "spore", "moss", "lichen", "algae", "seaweed", "cabbage", "broccoli",
+    "carrot", "potato", "tomato", "pepper", "onion", "garlic", "ginger",
+    "apple", "orange", "lemon", "banana", "berry", "grape", "mango", "pineapple",
+    "corn", "wheat", "rice", "barley", "oat", "sorghum", "millet", "sugarcane",
+    "cotton", "sunflower", "soybean", "peanut", "coffee", "tea", "tobacco",
+    "rubber", "jute", "coconut", "olive", "avocado", "cucumber", "pumpkin",
+    "melon", "squash", "lettuce", "spinach", "kale", "eggplant", "okra",
+    "basil", "mint", "thyme", "rosemary", "lavender", "sage", "parsley",
+    "cilantro", "dill", "oregano", "chive", "lemongrass", "tea",
+    "pitcher_plant", "venus_flytrap", "snapdragon", "marigold", "petunia",
+    "poppy", "sunflower", "hibiscus", "jasmine", "lotus", "water_lily",
+    "pine", "oak", "maple", "willow", "birch", "cedar", "cypress", "elm",
+    "beech", "cherry", "apple_tree", "peach", "plum", "pear", "fig", "pomegranate",
+    "guava", "papaya", "lychee", "dragon_fruit", "passion_fruit",
+]
+
+# Keywords that indicate human/face/object images (should be rejected)
+REJECT_KEYWORDS = [
+    "person", "face", "man", "woman", "boy", "girl", "child", "baby",
+    "human", "team", "group", "crowd", "player", "runner", "walker",
+    "jersey", "suit", "dress", "gown", "robe", "coat", "jacket", "shirt",
+    "pants", "jeans", "shorts", "skirt", "shoe", "sneaker", "boot", "sandal",
+    "hat", "cap", "glasses", "sunglasses", "watch", "ring", "necklace",
+    "laptop", "computer", "monitor", "keyboard", "mouse", "phone", "smartphone",
+    "tablet", "tv", "television", "remote", "camera", "webcam", "projector",
+    "book", "notebook", "paper", "magazine", "newspaper", "poster", "calendar",
+    "pen", "pencil", "marker", "eraser", "ruler", "stapler", "tape",
+    "desk", "chair", "table", "sofa", "couch", "bed", "pillow", "blanket",
+    "lamp", "light", "bulb", "fan", "ac", "air_conditioner", "heater",
+    "car", "truck", "bus", "motorcycle", "bicycle", "train", "airplane", "boat",
+    "bottle", "cup", "glass", "bowl", "plate", "spoon", "fork", "knife",
+    "knife", "pot", "pan", "kettle", "microwave", "oven", "toaster", "fridge",
+    "refrigerator", "sink", "faucet", "tap", "tub", "shower", "toilet",
+    "cell_phone", "ipod", "headphone", "earphone", "microphone", "speaker",
+    "wallet", "purse", "handbag", "backpack", "briefcase", "suitcase",
+    "umbrella", "raincoat", "socks", "tie", "scarf", "glove",
+]
 
 
 def get_severity(confidence: float, disease_name: str) -> str:
@@ -474,9 +518,153 @@ def load_disease_model():
         disease_model = None
 
 
+def load_mobilenet_model():
+    """Load MobileNetV2 for first-pass image validation."""
+    global mobilenet_model
+    try:
+        import tensorflow as tf
+        from tensorflow.keras.applications import MobileNetV2
+        
+        # Download and load the model with specific input shape
+        mobilenet_model = MobileNetV2(weights="imagenet", include_top=True, input_shape=(224, 224, 3))
+        print("[OK] MobileNetV2 loaded for image validation")
+    except Exception as e:
+        print(f"[WARN] Could not load MobileNetV2: {e}")
+        print("[INFO] Face/object detection will rely on fallback validation")
+        mobilenet_model = None
+
+
+def is_valid_plant_image(image_bytes: bytes) -> tuple[bool, str]:
+    """
+    First-pass validation using MobileNetV2 to reject non-plant images.
+    Returns (is_valid, reason).
+    """
+    # FALLBACK VALIDATION - Always active as backup
+    # Even if MobileNetV2 fails to load, we do basic color/feature analysis
+    try:
+        from PIL import Image as PILImage
+        import io
+        
+        image = PILImage.open(io.BytesIO(image_bytes)).convert("RGB")
+        img_array = np.array(image)
+        
+        # Get image statistics
+        h, w, c = img_array.shape
+        total_pixels = h * w
+        
+        # Calculate color distribution
+        r, g, b = img_array[:,:,0], img_array[:,:,1], img_array[:,:,2]
+        
+        # Green pixel detection - plants should have significant green
+        green_dominant = np.sum((g > r) & (g > b)) / total_pixels
+        
+        # Brown/yellow detection (typical for healthy leaves)
+        brown_yellow = np.sum(((r > 100) & (g > 80) & (b < 100))) / total_pixels
+        
+        # Blue/white sky detection (usually NOT plant)
+        sky_detected = np.sum((b > r) & (b > g) & (b > 150)) / total_pixels
+        
+        # Check for typical human skin tones (fallback for face detection)
+        skin_tone = np.sum((r > 95) & (g > 40) & (b > 20) & 
+                          (r > g) & (r > b) & 
+                          (np.abs(r - g) > 15) & (r - g < 100)) / total_pixels
+        
+        # If significant skin tone detected, likely a face
+        if skin_tone > 0.15:
+            return False, "Image appears to be a human face. Please scan a plant leaf instead."
+        
+        # If too much sky/blue, likely not a plant close-up
+        if sky_detected > 0.3:
+            return False, "Image appears to be sky or landscape. Please scan a plant leaf instead."
+        
+        # Very low green content AND low brown/yellow - likely not plant
+        if green_dominant < 0.1 and brown_yellow < 0.05:
+            return False, "Image does not appear to be a plant. Please scan a valid plant leaf."
+            
+    except Exception as e:
+        print(f"[WARN] Fallback validation error: {e}")
+    
+    # Now try MobileNetV2 if available
+    if mobilenet_model is None:
+        return True, ""  # Skip advanced check if model not available
+    
+    import tensorflow as tf
+    from PIL import Image as PILImage
+    
+    try:
+        # Load and preprocess image for MobileNetV2 (224x224)
+        image = PILImage.open(io.BytesIO(image_bytes)).convert("RGB")
+        image = image.resize((224, 224))
+        img_array = np.array(image, dtype=np.float32)
+        img_array = np.expand_dims(img_array, axis=0)
+        img_array = tf.keras.applications.mobilenet_v2.preprocess_input(img_array)
+        
+        # Get predictions - get top 10 to be more thorough
+        predictions = mobilenet_model.predict(img_array, verbose=0)
+        decoded = tf.keras.applications.mobilenet_v2.decode_predictions(predictions, top=10)[0]
+        
+        # Extract labels and scores
+        top_labels = [label.lower() for (_, label, score) in decoded]
+        top_scores = {label.lower(): score for (_, label, score) in decoded}
+        
+        # Check top 3 predictions - if any human/face/object detected, reject
+        top_3_labels = top_labels[:3]
+        top_3_scores = [top_scores.get(label, 0) for label in top_3_labels]
+        
+        # HIGHLY AGGRESSIVE REJECTION for faces and humans
+        for i, label in enumerate(top_3_labels):
+            score = top_3_scores[i]
+            # Check for face/person/human - even at low confidence
+            if any(h in label for h in ["person", "face", "man", "woman", "boy", "girl", "child", "baby", "human", "head", "body", "hand"]):
+                if score > 0.08:  # Even 8% confidence is suspicious for face
+                    return False, "Image appears to be a human face or person. Please scan a plant leaf instead."
+            
+            # Check for clothing/accessories
+            if any(c in label for c in ["shirt", "dress", "pants", "jeans", "shoe", "sneaker", "boot", "sandal", "hat", "cap", "glasses", "sunglasses", "watch", "ring", "necklace", "jersey", "suit", "gown", "robe", "coat", "jacket"]):
+                if score > 0.12:
+                    return False, "Image appears to be clothing or accessories. Please scan a plant leaf instead."
+            
+            # Check for electronics/objects
+            if any(e in label for e in ["laptop", "computer", "phone", "smartphone", "tablet", "tv", "monitor", "keyboard", "mouse", "camera", "book", "notebook", "paper", "remote"]):
+                if score > 0.15:
+                    return False, "Image appears to be an electronic device or object. Please scan a plant leaf instead."
+            
+            # Check for other non-plant objects
+            if any(o in label for o in ["car", "truck", "bus", "motorcycle", "bicycle", "desk", "chair", "table", "sofa", "bed", "bottle", "cup", "bowl", "glass", "pen", "pencil"]):
+                if score > 0.15:
+                    return False, "Image appears to be a non-plant object. Please scan a plant leaf instead."
+        
+        # Additional check: if no plant keywords in top 5 AND top prediction is clearly not plant
+        has_plant = any(any(pk in label for pk in PLANT_KEYWORDS) for label in top_labels[:5])
+        if not has_plant:
+            # Top prediction is not a plant - reject
+            return False, "Image does not appear to be a plant or crop. Please scan a valid plant leaf."
+        
+        return True, ""
+        
+    except Exception as e:
+        print(f"[WARN] MobileNetV2 validation error: {e}")
+        return True, ""  # Don't block on errors
+
+
+filter_model = None
+
+def load_filter_model():
+    """Load MobileNetV2 for non-plant/face filtration."""
+    global filter_model
+    try:
+        from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
+        print("[INFO] Loading MobileNetV2 for filtration...")
+        filter_model = MobileNetV2(weights='imagenet')
+        print("[OK] Filtration model loaded.")
+    except Exception as e:
+        print(f"[ERROR] Failed to load filtration model: {e}")
+
 @app.on_event("startup")
 async def startup_event():
     load_disease_model()
+    load_filter_model()
+    load_mobilenet_model()
 
 
 # =============================================================================
@@ -575,6 +763,53 @@ def is_not_a_plant(predictions_array: np.ndarray, top_confidence: float) -> tupl
     
     return False, ""
 
+def is_unrelated_image(image_bytes: bytes) -> tuple[bool, str]:
+    if filter_model is None:
+        return False, ""
+    try:
+        import numpy as np
+        from tensorflow.keras.applications.mobilenet_v2 import preprocess_input, decode_predictions
+        from PIL import Image as PILImage
+        import io
+        
+        image = PILImage.open(io.BytesIO(image_bytes)).convert("RGB").resize((224, 224))
+        img_array = np.expand_dims(np.array(image, dtype=np.float32), axis=0)
+        img_array = preprocess_input(img_array)
+        
+        preds = filter_model.predict(img_array, verbose=0)
+        decoded = decode_predictions(preds, top=5)[0]
+        
+        top_classes = [item[1].lower() for item in decoded]
+        top_conf = [item[2] for item in decoded]
+        print(f"[DEBUG] MobileNetV2 top predictions: {list(zip(top_classes, [round(c, 2) for c in top_conf]))}")
+        
+        # Reject objects/human traces often triggered by faces or general environment
+        face_keywords = [
+            "sunglasses", "lipstick", "wig", "mask", "shower_cap", "hair_spray", 
+            "band_aid", "neck_brace", "cowboy_hat", "suit", "groom", "t-shirt", 
+            "sweatshirt", "jersey", "bow_tie", "bikini", "cellular_telephone",
+            "laptop", "monitor", "desk", "coffee_mug", "cup", "bottle", "seat_belt",
+            "car", "motor_vehicle", "notebook", "tv", "teddy", "book"
+        ]
+        
+        for cl, conf in zip(top_classes, top_conf):
+            if conf > 0.15:
+                for kw in face_keywords:
+                    if kw in cl:
+                        return True, f"Image looks like a {cl.replace('_', ' ')} (human/object), not a plant."
+                        
+        animal_keywords = ["dog", "cat", "terrier", "hound", "spaniel", "retriever", "bird", "fish", "shark"]
+        for cl, conf in zip(top_classes, top_conf):
+            if conf > 0.25:
+                for kw in animal_keywords:
+                    if kw in cl:
+                        return True, f"Image looks like a {cl.replace('_', ' ')} (animal layer), not a plant."
+
+        return False, ""
+    except Exception as e:
+        print(f"[ERROR] Filter check failed: {e}")
+        return False, ""
+
 
 def predict_disease_from_image(image_bytes: bytes) -> dict:
     """Run disease prediction using TensorFlow model with non-plant rejection."""
@@ -583,6 +818,18 @@ def predict_disease_from_image(image_bytes: bytes) -> dict:
         result["is_mock"] = True
         result["success"] = True
         return result
+
+    # First-pass validation: explicitly check for human faces and unrelated objects using MobileNetV2 heuristics
+    is_unrelated, explanation = is_unrelated_image(image_bytes)
+    if is_unrelated:
+        return {
+            "success": False,
+            "is_plant": False,
+            "error": "not_a_plant",
+            "message": "The uploaded image does not appear to be a plant leaf or crop.",
+            "detail": explanation,
+            "suggestion": "Please upload a clear, close-up photo of a plant leaf showing the affected area.",
+        }
 
     import tensorflow as tf
     from PIL import Image as PILImage
@@ -602,16 +849,18 @@ def predict_disease_from_image(image_bytes: bytes) -> dict:
     predicted_idx = int(np.argmax(predictions[0]))
     confidence_value = float(predictions[0][predicted_idx]) * 100
 
-    # ── Non-plant rejection gate ──────────────────────────────────────────────
+
+
+    # ── Non-plant rejection gate (Entropy/Confidence stats) ───────────────────
     not_plant, reason = is_not_a_plant(predictions[0], confidence_value)
     if not_plant:
         return {
             "success": False,
             "is_plant": False,
             "error": "not_a_plant",
-            "message": "The uploaded image does not appear to be a plant leaf or crop image.",
+            "message": "The uploaded image does not appear to match any known plant disease pattern.",
             "detail": reason,
-            "suggestion": "Please upload a clear, close-up photo of a plant leaf, stem, or fruit showing the affected area.",
+            "suggestion": "Please upload a clear, close-up photo of a plant leaf showing the affected area.",
         }
 
     # Map to class name

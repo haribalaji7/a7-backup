@@ -110,7 +110,7 @@ async function callOpenAICompatible(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { messages, language } = body;
+    const { messages, language, voiceMode } = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json(
@@ -132,8 +132,17 @@ export async function POST(request: NextRequest) {
         `For Kannada (kn): Respond ONLY in Kannada. ` +
         `Ignore any other language preferences and respond strictly in ${language}.`;
 
+    // Voice mode instruction - for phone-style conversations
+    const voiceInstruction = voiceMode
+      ? `\n\nVOICE MODE: You are speaking on a live phone call with a farmer. ` +
+        `Keep your answers VERY SHORT (1-3 sentences max), conversational, and natural. ` +
+        `NEVER use markdown formatting (no asterisks, no hashtags, no bullet points, no code blocks). ` +
+        `Just speak naturally as you would on a phone call. ` +
+        `Start with a friendly greeting if it's the first message.`
+      : "";
+
     const conversationHistory = [
-      { role: "system", content: SYSTEM_PROMPT + languageInstruction },
+      { role: "system", content: SYSTEM_PROMPT + languageInstruction + voiceInstruction },
       ...messages.map((m: { role: string; content: string }) => ({
         role: m.role,
         content: m.content,
