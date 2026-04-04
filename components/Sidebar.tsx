@@ -2,25 +2,49 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Home, ScanLine, Leaf, Cloud, BarChart2, Map, Satellite, MessageSquare, DollarSign, TrendingUp, Sun, Moon, LogOut, MessageCircle, Phone
+  Home, ScanLine, Leaf, Cloud, BarChart2, Map, Satellite, MessageSquare, DollarSign, TrendingUp, Sun, Moon, LogOut, MessageCircle, Phone, LucideIcon
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 
 const navItems = [
   { label: "Home", icon: Home, href: "/" },
+  { label: "Farm Setup", icon: Leaf, href: "/setup" },
   { label: "Scan", icon: ScanLine, href: "/scan" },
+  { label: "Satellite", icon: Satellite, href: "/satellite" },
+  { label: "Crop Prices", icon: TrendingUp, href: "/crop-price" },
+  { label: "Assistant", icon: MessageSquare, href: "/assistant" },
+];
+
+const section2Items = [
   { label: "Soil", icon: Leaf, href: "/soil" },
   { label: "Weather", icon: Cloud, href: "/weather" },
-  { label: "Crop Prices", icon: TrendingUp, href: "/crop-price" },
-  { label: "Analytics", icon: BarChart2, href: "/analytics" },
   { label: "Map", icon: Map, href: "/farm-map" },
-  { label: "Satellite", icon: Satellite, href: "/satellite" },
-  { label: "Assistant", icon: MessageSquare, href: "/assistant" },
+  { label: "Analytics", icon: BarChart2, href: "/analytics" },
+];
+
+const section3Items = [
+  { label: "Community", icon: MessageCircle, href: "/community" },
   { label: "Helpline", icon: Phone, href: "/helpline" },
+];
+
+const section4Items = [
   { label: "Finance", icon: DollarSign, href: "/finance" },
-  { label: "Farm Setup", icon: Leaf, href: "/setup" },
   { label: "Feedback", icon: MessageCircle, href: "/feedback" },
 ];
+
+function NavLink({ item, pathname }: { item: { label: string; icon: LucideIcon; href: string }; pathname: string }) {
+  const Icon = item.icon;
+  const isActive = pathname === item.href;
+  return (
+    <Link
+      href={item.href}
+      className={`sidebar-nav-item ${isActive ? "active" : ""}`}
+    >
+      <Icon size={15} />
+      <span>{item.label}</span>
+    </Link>
+  );
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -45,20 +69,27 @@ export default function Sidebar() {
       </div>
 
       <nav className="sidebar-nav">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`sidebar-nav-item ${isActive ? "active" : ""}`}
-            >
-              <Icon size={15} />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
+        {navItems.map((item) => (
+          <NavLink key={item.href} item={item} pathname={pathname} />
+        ))}
+        
+        <div className="sidebar-divider" />
+        
+        {section2Items.map((item) => (
+          <NavLink key={item.href} item={item} pathname={pathname} />
+        ))}
+        
+        <div className="sidebar-divider" />
+        
+        {section3Items.map((item) => (
+          <NavLink key={item.href} item={item} pathname={pathname} />
+        ))}
+        
+        <div className="sidebar-divider" />
+        
+        {section4Items.map((item) => (
+          <NavLink key={item.href} item={item} pathname={pathname} />
+        ))}
       </nav>
 
       <div className="sidebar-footer">

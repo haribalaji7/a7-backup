@@ -105,6 +105,12 @@ body {
   font-weight: 500;
 }
 
+.sidebar-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 8px 16px;
+}
+
 .sidebar-footer {
   padding: 12px;
   border-top: 1px solid var(--border-color);
