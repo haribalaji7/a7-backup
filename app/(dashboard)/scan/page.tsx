@@ -151,7 +151,7 @@ function DiseaseScanner() {
       const formData = new FormData();
       formData.append("file", file);
       
-      const response = await axios.post("http://localhost:8001/predict/disease", formData, {
+      const response = await axios.post("http://localhost:8000/predict/disease", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       
@@ -526,7 +526,7 @@ function CropRecommender() {
     setResult(null);
     
     try {
-      const response = await axios.post<PredictionResult>("http://localhost:8001/predict/crop", {
+      const response = await axios.post<PredictionResult>("http://localhost:8000/predict/crop", {
         nitrogen: parseFloat(nitrogen),
         phosphorus: parseFloat(phosphorus),
         potassium: parseFloat(potassium),
@@ -535,7 +535,7 @@ function CropRecommender() {
       });
       setResult(response.data);
     } catch (err) {
-      setError("Failed to get recommendations. Make sure the ML backend is running on port 8001.");
+      setError("Failed to get recommendations. Make sure the ML backend is running on port 8000.");
       console.warn("Crop prediction backend unavailable:", err);
     } finally {
       setLoading(false);

@@ -1,5 +1,5 @@
 "use client";
-import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMapEvents, LayersControl, LayerGroup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useState, useCallback } from "react";
@@ -108,10 +108,33 @@ export default function MapView({ onLocationSelect, selectedLocation }: MapViewP
         style={{ height: "100%", width: "100%" }}
         zoomControl={false}
       >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
+        <LayersControl position="topright">
+          <LayersControl.BaseLayer checked name="Satellite View">
+            <TileLayer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              attribution="Tiles &copy; Esri"
+              maxZoom={19}
+            />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="Street View">
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="Hybrid (Satellite + Labels)">
+            <LayerGroup>
+              <TileLayer
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                maxZoom={19}
+              />
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution=""
+              />
+            </LayerGroup>
+          </LayersControl.BaseLayer>
+        </LayersControl>
         <ZoomControl position="topleft" />
         <MapClickHandler onMapClick={handleMapClick} />
         

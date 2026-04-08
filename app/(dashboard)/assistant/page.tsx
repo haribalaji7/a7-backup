@@ -4,7 +4,7 @@ import { Send, Bot, User, Mic, MicOff, Loader2, Volume2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { voiceService } from "@/services/voiceService";
 
-type LanguageCode = "en" | "ta" | "te" | "ml" | "kn";
+type LanguageCode = "en" | "ta" | "te" | "ml" | "kn" | "hi";
 
 interface ChatMessage {
   id: string;
@@ -19,14 +19,16 @@ const LANGUAGES: Record<LanguageCode, { name: string; native: string }> = {
   te: { name: "Telugu", native: "తెలుగు" },
   ml: { name: "Malayalam", native: "മലയാളം" },
   kn: { name: "Kannada", native: "ಕನ್ನಡ" },
+  hi: { name: "Hindi", native: "हिंदी" },
 };
 
 const localizedGreetings: Record<LanguageCode, string> = {
   en: "Namaste! 🌾 I'm your Smart Agri AI Assistant. I can help with crop management, soil health, pest control, irrigation, and more. How can I assist you today?",
-  ta: "வணக்கம்! 🌾 நான் உங்களின் Smart Agri AI உதவியாளர். பயிர் மேலாண்மை, மண் ஆரோக்கியம், பூச்சி கட்டுப்பாடு, நீர்ப்பாசனம் ஆகியவற்றில் உதவ முடியும். இன்று உங்களுக்கு எப்படி உதவலாம்?",
-  te: "నమస్కారం! 🌾 నేను మీ Smart Agri AI అసిస్టెంట్. పంట నిర్వహణ, నేల ఆరోగ్యం, కీటక నియంత్రణ, ప ిరిగేషన్‌లో సహాయపడగలను. ఈ రోజు మీకు ఎలా సహాయపడగలను?",
+  ta: "வணக்கம்! 🌾 நான் உங்களின் Smart Agri AI உதவியாளர். பயிர் மேலாண்மை, மண் ஆரோக்கியம், பூச்சி கட்டுப்பாடு, நீர்ப்பாசனம் ஆகியவற்றில் உதவ முடியும். இன்று உங்களுக்கு எப்படி உதவலாம?",
+  te: "నమస్కారం! 🌾 నేను మీ Smart Agri AI అసిస్టెంట్. పంట నిర్వహణ, నేల ఆరోగ్యం, కీటక నియంత్రణ, ప ిరిగేషన్‌లో सहाय्य करू शकतो. ఈ रोजు मी आपली कशी मदत करू शकतो?",
   ml: "നമസ്കാരം! 🌾 ഞാൻ നിങ്ങളുടെ Smart Agri AI സഹായിയാണ്. കൃഷി മാനേജ്മെന്റ്, മണ്ണിന്റെ ആരോഗ്യം, കീട നിയന്ത്രണം, ജലസേചനം എന്നിവയിൽ സഹായിക്കാൻ കഴിയും. ഇന്ന് എങ്ങനെ സഹായിക്കാനാകും?",
   kn: "ನಮಸ್ಕಾರ! 🌾 ನಾನು ನಿಮ್ಮ Smart Agri AI ಸಹಾಯಕ. ಬೆಳೆ ನಿರ್ವಹಣೆ, ಮಣ್ಣಿನ ಆರೋಗ್ಯ, ಕೀಟ ನಿಯಂತ್ರಣ, ನೀರಾವರಿಯಲ್ಲಿ ಸಹಾಯ ಮಾಡಬಹುದು. ಇಂದು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",
+  hi: "नमस्ते! 🌾 मैं आपका Smart Agri AI सहायक हूं। मैं फसल प्रबंधन, मिट्टी की स्वास्थ्य, कीट नियंत्रण, सिंचाई में मदद कर सकता हूं। आज मैं आपकी कैसे मदद कर सकता हूं?",
 };
 
 const placeholders: Record<LanguageCode, string> = {
@@ -35,6 +37,7 @@ const placeholders: Record<LanguageCode, string> = {
   te: "పంటలు, నేల, వాతావరణం, కీటకాల గురించి అడుగండి…",
   ml: "കൃഷി, മണ്ണ്, കാലാവസ്ഥ, കീടങ്ങൾ എന്നിവയെ കുറിച്ച് ചോദിക്കുക…",
   kn: "ಬೆಳೆ, ಮಣ್ಣು, ಹವಾಮಾನ, ಕೀಟಗಳ ಬಗ್ಗೆ ಕೇಳಿ…",
+  hi: "फसल, मिट्टी, मौसम, कीटों के बारे में पूछें…",
 };
 
 function formatTime() {
@@ -440,64 +443,49 @@ export default function AssistantPage() {
            <div className="card" style={{ height: "fit-content" }}>
            <div className="section-title">{lang === "ta" ? "அவசர் கேள்விகள்" : lang === "te" ? "అవసర ప్రశ్నలు" : lang === "ml" ? "ടെക്ക് ചോദ്യങ്ങൾ" : lang === "kn" ? "ಉತ್ಸಾಹ ಪ್ರಶ್ನೆಗಳು" : "Quick Questions"}</div>
            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-             {[
-               {
-                 en: "How do I improve soil moisture?",
-                 ta: "மண் நிலאים எப்படி மேம்படுத்தலாம்?",
-                 te: "నేల canales నెదిపు ఎలా మెరుగుపరచాలి?",
-                 ml: "മണ്ണളの湿度 എങ്ങനെയാണ് മെച്ചപ്പെടുത്താൻ?",
-                 kn: "ಮಣ್ಣಿ rainy levelsನdoch ಹೇಗೆ ಪರಿಹರಿಸಬಹುದು?"
-               },
-               {
-                 en: "Best fertiliser for wheat in March?",
-                 ta: "மார்ச் மாதத்தில் Godhumai இனமான உரமை?",
-                 te: "మార్చి Godhumai నtense Україні удобрений?",
-                 ml: "മാർച്ച് മാസംGodhumai ലഭ്യമായ പ്രതികൂലം?",
-                 kn: "ಮಾರ್ಚ್ Godhi ದೈಸಿಕಗ Hollande señores?"
-               },
-               {
-                 en: "How to prevent early blight?",
-                 ta: "வரவேகாலை பிளைட் ఎப்படি தட/",
-                 te: "మొదటి blight నా reoz’arrêter?",
-                 ml: "അര Fitzgerald’s blight പredux എങ്ങനെ?",
-                 kn: "ನ analogous early blight ನ ತ ದ_characters হ বিশ্বাস"
-               },
-               {
-                 en: "When should I irrigate paddy?",
-                 ta: "பயிர்engine kub unix?",
-                 te: "మొదటి พืชsoil Nhay khi nào?",
-                 ml: "വിത്തം hydropower എപ്പോൾ?",
-                 kn: "ಕrieron.varies.വ.Normal"
-               },
-               {
-                 en: "Natural pest control methods?",
-                 ta: "இயாத்திரimprint pests regulation?",
-                 te: "సహజ DDSCs లేదా నైసर्गికاوية?",
-                 ml: "സ്വഭാവികvariant എന്താണ്?",
-                 kn: "ಸೈನ\" εsa ಠ tenido?"
-               }
-             ].map((q, i) => (
-               <button
-                 key={i}
-                 onClick={() => sendMsg(q[lang] || q.en)}
-                 style={{
-                   padding: "9px 12px",
-                   textAlign: "left",
-                   background: "#f0fdf4",
-                   border: "1px solid #bbf7d0",
-                   borderRadius: 8,
-                   fontSize: 12,
-                   color: "#15803d",
-                   cursor: "pointer",
-                   fontFamily: "inherit",
-                 }}
-                 onMouseEnter={e => (e.target as HTMLElement).style.background = "#dcfce7"}
-                 onMouseLeave={e => (e.target as HTMLElement).style.background = "#f0fdf4"}
-               >
-                 🌱 {q[lang] || q.en}
-               </button>
-             ))}
-           </div>
+              {[
+                {
+                  en: "How do I improve soil moisture?",
+                  hi: "मिट्टी की नमी कैसे बढ़ाएं?",
+                },
+                {
+                  en: "Best fertiliser for wheat in March?",
+                  hi: "मार्च में गेहूं के लिए सबसे अच्छा खाद?",
+                },
+                {
+                  en: "How to prevent early blight?",
+                  hi: "अलग ब्लाइट को कैसे रोकें?",
+                },
+                {
+                  en: "When should I irrigate paddy?",
+                  hi: "धान की सिंचाई कब करनी चाहिए?",
+                },
+                {
+                  en: "Natural pest control methods?",
+                  hi: "कीट नियंत्रण के प्राकृतिक तरीके?",
+                }
+              ].map((q, i) => (
+                <button
+                  key={i}
+                  onClick={() => sendMsg(q[lang as keyof typeof q] || q.en)}
+                  style={{
+                    padding: "9px 12px",
+                    textAlign: "left",
+                    background: "#f0fdf4",
+                    border: "1px solid #bbf7d0",
+                    borderRadius: 8,
+                    fontSize: 12,
+                    color: "#15803d",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                  }}
+                  onMouseEnter={e => (e.target as HTMLElement).style.background = "#dcfce7"}
+                  onMouseLeave={e => (e.target as HTMLElement).style.background = "#f0fdf4"}
+                >
+                  🌱 {q[lang as keyof typeof q] || q.en}
+                </button>
+              ))}
+            </div>
 
           <div style={{ marginTop: 20 }}>
             <div className="section-title">Today&apos;s Farm Data</div>

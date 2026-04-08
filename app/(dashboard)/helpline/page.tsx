@@ -1,53 +1,140 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Phone, PhoneCall, Clock, Shield, ArrowRight, PhoneOff, Loader2 } from "lucide-react";
+import { Phone, PhoneCall, Clock, Shield, ArrowRight, PhoneOff, Loader2, Globe } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AgentCallModal from "@/components/helpline/AgentCallModal";
 
+type LanguageCode = "en" | "hi";
+
+const LANGUAGES: Record<LanguageCode, { name: string; native: string }> = {
+  en: { name: "English", native: "English" },
+  hi: { name: "Hindi", native: "हिंदी" },
+};
+
+const translations = {
+  en: {
+    pageTitle: "Helpline",
+    pageSubtitle: "Emergency contacts and government helplines for farmers",
+    callAIExpert: "Call AI Expert",
+    emergencyServices: "Emergency Services",
+    governmentHelplines: "Government Helplines",
+    quickGuide: "Quick Guide",
+    tip: "Tip",
+    clickAbove: "Click on any number above to initiate a call.",
+    agriHelplines: "Agricultural Helplines",
+    kisanDesc: "Kisan Call Center (1800-180-1551) - Free service for farming queries",
+    govSchemes: "Government Schemes",
+    pmkisanDesc: "PM-KISAN helpline for farmer welfare scheme inquiries",
+    aiExpert: "AI Expert",
+    aiExpertDesc: "Get instant AI-powered agricultural assistance",
+    tipDesc: "Use the AI Expert for instant answers to your farming questions - available 24/7",
+  },
+  hi: {
+    pageTitle: "हेल्पलाइन",
+    pageSubtitle: "किसानों के लिए आपातकालीन संपर्क और सरकारी हेल्पलाइन",
+    callAIExpert: "AI विशेषज्ञ को कॉल करें",
+    emergencyServices: "आपातकालीन सेवाएं",
+    governmentHelplines: "सरकारी हेल्पलाइन",
+    quickGuide: "त्वरित मार्गदर्शन",
+    tip: "सुझाव",
+    clickAbove: "कॉल शुरू करने के लिए ऊपर दिए गए किसी भी नंबर पर क्लिक करें।",
+    agriHelplines: "कृषि हेल्पलाइन",
+    kisanDesc: "किसान कॉल सेंटर (1800-180-1551) - कृषि प्रश्नों के लिए निःशुल्क सेवा",
+    govSchemes: "सरकारी योजनाएं",
+    pmkisanDesc: "PM-KISAN हेल्पलाइन किसान कल्याण योजना पूछताछ के लिए",
+    aiExpert: "AI विशेषज्ञ",
+    aiExpertDesc: "तुरंत AI-संचालित कृषि सहायता प्राप्त करें",
+    tipDesc: "अपने खेती के प्रश्नों के लिए तुरंत उत्तर पाने के लिए AI विशेषज्ञ का उपयोग करें - 24/7 उपलब्ध",
+  },
+};
+
 const emergencyServices = [
-  { name: "Police", number: "100", color: "bg-blue-500", icon: "🚔" },
-  { name: "Ambulance", number: "102 / 108", color: "bg-red-500", icon: "🚑" },
-  { name: "Fire", number: "101", color: "bg-orange-500", icon: "🚒" },
-  { name: "Emergency", number: "112", color: "bg-purple-500", icon: "🆘" },
+  { name: "Police", nameHi: "पुलिस", number: "100", color: "bg-blue-500", icon: "🚔" },
+  { name: "Ambulance", nameHi: "एम्बुलेंस", number: "102 / 108", color: "bg-red-500", icon: "🚑" },
+  { name: "Fire", nameHi: "फायर", number: "101", color: "bg-orange-500", icon: "🚒" },
+  { name: "Emergency", nameHi: "आपातकाल", number: "112", color: "bg-purple-500", icon: "🆘" },
 ];
 
-const helplines = [
-  {
-    category: "Agriculture",
-    icon: "🌾",
-    color: "green",
-    contacts: [
-      { label: "Kisan Call Center", number: "1800-180-1551", available: "24/7" },
-      { label: "National Farmers Helpline", number: "1551", available: "24/7" },
-      { label: "Agri-Business Center", number: "1800-425-1556", available: "24/7" },
-    ]
-  },
-  {
-    category: "Government Schemes",
-    icon: "🏛️",
-    color: "blue",
-    contacts: [
-      { label: "PM-Kisan Helpline", number: "155261", available: "24/7" },
-      { label: "PM-Kisan Toll Free", number: "1800115526", available: "24/7" },
-      { label: "NHB Helpline", number: "1800-180-2006", available: "Mon-Sat" },
-    ]
-  },
-  {
-    category: "Weather & Crop",
-    icon: "🌤️",
-    color: "cyan",
-    contacts: [
-      { label: "Weather Updates", number: "1800-180-1717", available: "24/7" },
-      { label: "Crop Insurance", number: "1800-258-0800", available: "24/7" },
-    ]
-  },
-];
+const helplines = {
+  en: [
+    {
+      category: "Agriculture",
+      categoryHi: "कृषि",
+      icon: "🌾",
+      color: "green",
+      contacts: [
+        { label: "Kisan Call Center", labelHi: "किसान कॉल सेंटर", number: "1800-180-1551", available: "24/7" },
+        { label: "National Farmers Helpline", labelHi: "राष्ट्रीय किसान हेल्पलाइन", number: "1551", available: "24/7" },
+        { label: "Agri-Business Center", labelHi: "कृषि व्यापार केंद्र", number: "1800-425-1556", available: "24/7" },
+      ]
+    },
+    {
+      category: "Government Schemes",
+      categoryHi: "सरकारी योजनाएं",
+      icon: "🏛️",
+      color: "blue",
+      contacts: [
+        { label: "PM-Kisan Helpline", labelHi: "PM-Kisan हेल्पलाइन", number: "155261", available: "24/7" },
+        { label: "PM-Kisan Toll Free", labelHi: "PM-Kisan टोल फ्री", number: "1800115526", available: "24/7" },
+        { label: "NHB Helpline", labelHi: "NHB हेल्पलाइन", number: "1800-180-2006", available: "Mon-Sat" },
+      ]
+    },
+    {
+      category: "Weather & Crop",
+      categoryHi: "मौसम और फसल",
+      icon: "🌤️",
+      color: "cyan",
+      contacts: [
+        { label: "Weather Updates", labelHi: "मौसम अपडेट", number: "1800-180-1717", available: "24/7" },
+        { label: "Crop Insurance", labelHi: "फसल बीमा", number: "1800-258-0800", available: "24/7" },
+      ]
+    },
+  ],
+  hi: [
+    {
+      category: "Agriculture",
+      categoryHi: "कृषि",
+      icon: "🌾",
+      color: "green",
+      contacts: [
+        { label: "Kisan Call Center", labelHi: "किसान कॉल सेंटर", number: "1800-180-1551", available: "24/7" },
+        { label: "National Farmers Helpline", labelHi: "राष्ट्रीय किसान हेल्पलाइन", number: "1551", available: "24/7" },
+        { label: "Agri-Business Center", labelHi: "कृषि व्यापार केंद्र", number: "1800-425-1556", available: "24/7" },
+      ]
+    },
+    {
+      category: "Government Schemes",
+      categoryHi: "सरकारी योजनाएं",
+      icon: "🏛️",
+      color: "blue",
+      contacts: [
+        { label: "PM-Kisan Helpline", labelHi: "PM-Kisan हेल्पलाइन", number: "155261", available: "24/7" },
+        { label: "PM-Kisan Toll Free", labelHi: "PM-Kisan टोल फ्री", number: "1800115526", available: "24/7" },
+        { label: "NHB Helpline", labelHi: "NHB हेल्पलाइन", number: "1800-180-2006", available: "Mon-Sat" },
+      ]
+    },
+    {
+      category: "Weather & Crop",
+      categoryHi: "मौसम और फसल",
+      icon: "🌤️",
+      color: "cyan",
+      contacts: [
+        { label: "Weather Updates", labelHi: "मौसम अपडेट", number: "1800-180-1717", available: "24/7" },
+        { label: "Crop Insurance", labelHi: "फसल बीमा", number: "1800-258-0800", available: "24/7" },
+      ]
+    },
+  ],
+};
 
 export default function HelplinePage() {
+  const [lang, setLang] = useState<LanguageCode>("en");
   const [isCallOpen, setIsCallOpen] = useState(false);
   const [emergencyCall, setEmergencyCall] = useState<{ name: string; number: string; icon: string } | null>(null);
   const [callStatus, setCallStatus] = useState<"idle" | "calling" | "connected" | "ended">("idle");
   const [callTimer, setCallTimer] = useState(0);
+
+  const t = translations[lang];
+  const currentHelplines = helplines[lang];
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -87,32 +174,53 @@ export default function HelplinePage() {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
         <div>
-          <div className="page-title" style={{ marginBottom: 4 }}>Helpline</div>
+          <div className="page-title" style={{ marginBottom: 4 }}>{t.pageTitle}</div>
           <div className="page-subtitle" style={{ marginBottom: 0 }}>
-            Emergency contacts and government helplines for farmers
+            {t.pageSubtitle}
           </div>
         </div>
-        <button 
-          onClick={() => setIsCallOpen(true)}
-          className="btn btn-green"
-          style={{ display: "flex", alignItems: "center", gap: 8 }}
-        >
-          <PhoneCall size={16} />
-          Call AI Expert
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <select
+            value={lang}
+            onChange={(e) => setLang(e.target.value as LanguageCode)}
+            style={{
+              padding: "6px 12px",
+              borderRadius: "8px",
+              border: "1px solid #e5e7eb",
+              fontSize: 13,
+              background: "#ffffff",
+              color: "#374151",
+              outline: "none",
+              cursor: "pointer",
+              fontWeight: 500
+            }}
+          >
+            {Object.entries(LANGUAGES).map(([code, config]) => (
+              <option key={code} value={code}>{config.native}</option>
+            ))}
+          </select>
+          <button 
+            onClick={() => setIsCallOpen(true)}
+            className="btn btn-green"
+            style={{ display: "flex", alignItems: "center", gap: 8 }}
+          >
+            <PhoneCall size={16} />
+            {t.callAIExpert}
+          </button>
+        </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         <div>
           <div className="section-title" style={{ marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
             <Shield size={16} style={{ color: "#ef4444" }} />
-            Emergency Services
+            {t.emergencyServices}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {emergencyServices.map((service, i) => (
               <motion.button
                 key={i}
-                onClick={() => handleEmergencyClick(service)}
+                onClick={() => handleEmergencyClick({ name: lang === "hi" ? service.nameHi : service.name, number: service.number, icon: service.icon })}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="card"
@@ -136,7 +244,7 @@ export default function HelplinePage() {
                   borderRadius: "4px 0 0 4px"
                 }} />
                 <div style={{ fontSize: 28, marginBottom: 8 }}>{service.icon}</div>
-                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{service.name}</div>
+                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{lang === "hi" ? service.nameHi : service.name}</div>
                 <div style={{ fontSize: 16, fontWeight: 700, color: "#374151" }}>{service.number}</div>
               </motion.button>
             ))}
@@ -144,9 +252,9 @@ export default function HelplinePage() {
 
           <div className="section-title" style={{ marginTop: 24, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
             <Phone size={16} style={{ color: "#22c55e" }} />
-            Government Helplines
+            {t.governmentHelplines}
           </div>
-          {helplines.map((section, idx) => (
+          {currentHelplines.map((section, idx) => (
             <div key={idx} className="card" style={{ marginBottom: 12, padding: 0, overflow: "hidden" }}>
               <div style={{ 
                 padding: "12px 16px", 
@@ -157,13 +265,13 @@ export default function HelplinePage() {
                 gap: 8
               }}>
                 <span style={{ fontSize: 18 }}>{section.icon}</span>
-                <span style={{ fontWeight: 600 }}>{section.category}</span>
+                <span style={{ fontWeight: 600 }}>{lang === "hi" ? section.categoryHi : section.category}</span>
               </div>
               <div style={{ padding: 12 }}>
                 {section.contacts.map((contact, cIdx) => (
                   <div
                     key={cIdx}
-                    onClick={() => handleEmergencyClick({ name: contact.label, number: contact.number, icon: "📞" })}
+                    onClick={() => handleEmergencyClick({ name: lang === "hi" ? (contact.labelHi || contact.label) : contact.label, number: contact.number, icon: "📞" })}
                     style={{
                       display: "flex",
                       justifyContent: "space-between",
@@ -185,7 +293,7 @@ export default function HelplinePage() {
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 500, fontSize: 13, color: "#1f2937" }}>{contact.label}</div>
+                      <div style={{ fontWeight: 500, fontSize: 13, color: "#1f2937" }}>{lang === "hi" ? (contact.labelHi || contact.label) : contact.label}</div>
                       <div style={{ fontSize: 11, color: "#6b7280", display: "flex", alignItems: "center", gap: 4 }}>
                         <Clock size={10} /> {contact.available}
                       </div>
@@ -199,40 +307,40 @@ export default function HelplinePage() {
         </div>
 
         <div>
-          <div className="section-title" style={{ marginBottom: 12 }}>Quick Guide</div>
+          <div className="section-title" style={{ marginBottom: 12 }}>{t.quickGuide}</div>
           <div className="card" style={{ padding: 16 }}>
             <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 16 }}>
-              Click on any number above to initiate a call. Emergency services (100, 102, 101, 112) work throughout India.
+              {t.clickAbove}
             </div>
             
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#1f2937", marginBottom: 8 }}>🌾 Agricultural Helplines</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#1f2937", marginBottom: 8 }}>🌾 {t.agriHelplines}</div>
               <div style={{ fontSize: 12, color: "#6b7280" }}>
-                Kisan Call Center (1800-180-1551) - Free service for farming queries in multiple languages
+                {t.kisanDesc}
               </div>
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#1f2937", marginBottom: 8 }}>🏛️ Government Schemes</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#1f2937", marginBottom: 8 }}>🏛️ {t.govSchemes}</div>
               <div style={{ fontSize: 12, color: "#6b7280" }}>
-                PM-KISAN helpline for farmer welfare scheme inquiries and grievance redressal
+                {t.pmkisanDesc}
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#1f2937", marginBottom: 8 }}>🤖 AI Expert</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#1f2937", marginBottom: 8 }}>🤖 {t.aiExpert}</div>
               <div style={{ fontSize: 12, color: "#6b7280" }}>
-                Get instant AI-powered agricultural assistance - click "Call AI Expert" button above
+                {t.aiExpertDesc}
               </div>
             </div>
           </div>
 
           <div className="card" style={{ marginTop: 16, padding: 16, background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: "#16a34a", marginBottom: 8 }}>
-              💡 Tip
+              💡 {t.tip}
             </div>
             <div style={{ fontSize: 12, color: "#15803d" }}>
-              Use the AI Expert for instant answers to your farming questions - available 24/7 in 5 Indian languages (English, Tamil, Telugu, Malayalam, Kannada)
+              {t.tipDesc}
             </div>
           </div>
         </div>

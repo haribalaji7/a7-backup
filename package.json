@@ -7,8 +7,8 @@
     "next:dev": "next dev --webpack",
     "ml:setup": "cd ml-backend && pip install -r requirements.txt -q",
     "ml:train": "cd ml-backend && python train_model.py",
-    "ml:dev": "cd ml-backend && uvicorn main:app --host 0.0.0.0 --port 8001 --reload",
-    "ml:start": "cd ml-backend && uvicorn main:app --host 0.0.0.0 --port 8001",
+    "ml:dev": "cd ml-backend && uvicorn main:app --host 0.0.0.0 --port 8000 --reload",
+    "ml:start": "cd ml-backend && uvicorn main:app --host 0.0.0.0 --port 8000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

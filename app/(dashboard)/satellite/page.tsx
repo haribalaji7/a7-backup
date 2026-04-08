@@ -71,10 +71,20 @@ export default function SatellitePage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Analysis failed");
+      if (!res.ok) {
+        if (data.error?.includes("ML backend")) {
+          throw new Error("ML backend unavailable. Make sure to run: npm run ml:dev");
+        }
+        throw new Error(data.error || data.detail || "Analysis failed");
+      }
       setResult(data);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      if (msg.includes("fetch") || msg.includes("network") || msg.includes("ECONNREFUSED")) {
+        setError("Cannot connect to ML backend. Please restart with: npm run dev");
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }

@@ -9,7 +9,7 @@ interface AgentCallModalProps {
   onClose: () => void;
 }
 
-type LanguageCode = "en" | "ta" | "kn" | "ml" | "te";
+type LanguageCode = "en" | "ta" | "kn" | "ml" | "te" | "hi";
 
 type CallState = "idle" | "connecting" | "listening" | "thinking" | "speaking";
 
@@ -64,6 +64,7 @@ const languages: { id: LanguageCode; label: string; voiceLang: string }[] = [
   { id: "kn", label: "ಕನ್ನಡ", voiceLang: "kn-IN" },
   { id: "ml", label: "മലയാളം", voiceLang: "ml-IN" },
   { id: "te", label: "తెలుగు", voiceLang: "te-IN" },
+  { id: "hi", label: "हिंदी", voiceLang: "hi-IN" },
 ];
 
 const translations: Record<LanguageCode, { status: string; agent: string; listening: string; thinking: string; speaking: string }> = {
@@ -72,6 +73,7 @@ const translations: Record<LanguageCode, { status: string; agent: string; listen
   kn: { status: "ಸಂಪರ್ಕಿಸುತ್ತಿದೆ...", agent: "ಕೃಷಿ AI ತಜ್ಞ", listening: "ಕೇಳುತ್ತಿದೆ...", thinking: "ಯೋಚಿಸುತ್ತಿದೆ...", speaking: "ಮಾತಾಡುತ್ತಿದೆ..." },
   ml: { status: "ബന്ധിപ്പിക്കുന്നു...", agent: "കൃഷി AI വിദഗ്ധൻ", listening: "കേട്ടുകൊണ്ടിരിക്കുന്നു...", thinking: "ചിന്തിക്കുന്നു...", speaking: "സംസാരിക്കുന്നു..." },
   te: { status: "कनेक्ट हो रहा है...", agent: "कृषि AI विशेषज्ञ", listening: "सुन रहा है...", thinking: "सोच रहा है...", speaking: "बोल रहा है..." },
+  hi: { status: "कनेक्ट हो रहा है...", agent: "कृषि AI विशेषज्ञ", listening: "सुन रहा हूं...", thinking: "सोच रहा हूं...", speaking: "बोल रहा हूं..." },
 };
 
 export default function AgentCallModal({ isOpen, onClose }: AgentCallModalProps) {

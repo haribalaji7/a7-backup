@@ -330,13 +330,14 @@ DISEASE_KNOWLEDGE = {
 
 
 # =============================================================================
-# MODEL LOADING (TensorFlow/Keras)
+# MODEL LOADING (TensorFlow/Keras) + TTA
 # =============================================================================
 
 disease_model = None
 class_names = None
 class_names_json = None
 mobilenet_model = None
+TTA_AUGMENTATIONS = 5  # Number of TTA passes
 
 # Keywords that indicate plant/leaf images in ImageNet
 PLANT_KEYWORDS = [
@@ -429,11 +430,10 @@ def load_disease_model():
     print(f"[DEBUG] MODEL_DIR: {MODEL_DIR}")
     print(f"[DEBUG] CWD: {os.getcwd()}")
     
-    # Try multiple model filenames
+    # Try multiple model filenames - use original robust model
     model_candidates = [
-        os.path.join(MODEL_DIR, "plant_disease_model.keras"),  # Larger pre-trained model
-        os.path.join(MODEL_DIR, "trained_plant_disease_model.keras"),  # Our trained model
-        os.path.join(MODEL_DIR, "trained_model.keras"),
+        os.path.join(MODEL_DIR, "plant_disease_model.keras"),  # Original robust model
+        os.path.join(MODEL_DIR, "trained_plant_disease_model.keras"),  # Fallback
     ]
     
     model_path = None
@@ -441,6 +441,7 @@ def load_disease_model():
         if os.path.exists(mp):
             model_path = mp
             print(f"[DEBUG] Found model at: {model_path}")
+            print(f"[INFO] Using model: {os.path.basename(mp)}")
             break
     
     print(f"[DEBUG] model_path: {model_path}")
@@ -724,10 +725,10 @@ def format_disease_name(raw_name: str) -> str:
 # Non-plant images may produce confident but WRONG predictions.
 # We use confidence + entropy heuristics to catch uncertain/unusual inputs.
 
-MIN_CONFIDENCE = 40.0      # Minimum confidence threshold for any prediction
-MAX_ENTROPY = 3.3          # Max entropy (~log(38)=3.64 means uniform = confused)
-MIN_ENTROPY = 0.8          # Min entropy - extremely peaked = suspicious
-TOP3_MIN_SUM = 65.0       # Top-3 must account for at least 65% of probability
+MIN_CONFIDENCE = 25.0      # Lowered from 40% to return more predictions
+MAX_ENTROPY = 3.5          # Max entropy (~log(38)=3.64 means uniform = confused)
+MIN_ENTROPY = 0.5          # Min entropy - extremely peaked = suspicious
+TOP3_MIN_SUM = 50.0        # Lowered from 65% to return more predictions
 
 
 def is_not_a_plant(predictions_array: np.ndarray, top_confidence: float) -> tuple[bool, str]:
@@ -812,7 +813,7 @@ def is_unrelated_image(image_bytes: bytes) -> tuple[bool, str]:
 
 
 def predict_disease_from_image(image_bytes: bytes) -> dict:
-    """Run disease prediction using TensorFlow model with non-plant rejection."""
+    """Run disease prediction using TensorFlow model with non-plant rejection + TTA."""
     if disease_model is None:
         result = MOCK_DISEASE_RESULTS["default"].copy()
         result["is_mock"] = True
@@ -833,26 +834,42 @@ def predict_disease_from_image(image_bytes: bytes) -> dict:
 
     import tensorflow as tf
     from PIL import Image as PILImage
+    from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-    # Get expected input size from model
     input_shape = disease_model.input_shape
     img_size = input_shape[1] if input_shape[1] else 256
 
-    # Load and preprocess image
     image = PILImage.open(io.BytesIO(image_bytes)).convert("RGB")
     image = image.resize((img_size, img_size))
-    img_array = np.array(image, dtype=np.float32) / 255.0  # Normalize to [0,1]
-    img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
+    img_array = np.array(image, dtype=np.float32) / 255.0
 
-    # Predict
-    predictions = disease_model.predict(img_array, verbose=0)
-    predicted_idx = int(np.argmax(predictions[0]))
-    confidence_value = float(predictions[0][predicted_idx]) * 100
+    tta_datagen = ImageDataGenerator(
+        rotation_range=15,
+        width_shift_range=0.1,
+        height_shift_range=0.1,
+        horizontal_flip=True,
+        zoom_range=0.1,
+        fill_mode='nearest'
+    )
+
+    tta_predictions = []
+    original_pred = disease_model.predict(np.expand_dims(img_array, axis=0), verbose=0)
+    tta_predictions.append(original_pred[0])
+
+    for _ in range(TTA_AUGMENTATIONS - 1):
+        aug_iter = tta_datagen.flow(np.expand_dims(img_array, axis=0), batch_size=1)
+        aug_image = next(aug_iter)[0]
+        pred = disease_model.predict(np.expand_dims(aug_image, axis=0), verbose=0)
+        tta_predictions.append(pred[0])
+
+    predictions = np.mean(tta_predictions, axis=0)
+    predicted_idx = int(np.argmax(predictions))
+    confidence_value = float(predictions[predicted_idx]) * 100
 
 
 
     # ── Non-plant rejection gate (Entropy/Confidence stats) ───────────────────
-    not_plant, reason = is_not_a_plant(predictions[0], confidence_value)
+    not_plant, reason = is_not_a_plant(predictions, confidence_value)
     if not_plant:
         return {
             "success": False,
@@ -875,13 +892,13 @@ def predict_disease_from_image(image_bytes: bytes) -> dict:
     severity = get_severity(confidence_value, disease_key)
 
     # Get top-3 predictions
-    top3_indices = np.argsort(predictions[0])[::-1][:3]
+    top3_indices = np.argsort(predictions)[::-1][:3]
     top3 = []
     for idx in top3_indices:
         cls_name = class_names[idx] if class_names and idx < len(class_names) else f"Class_{idx}"
         top3.append({
             "disease": format_disease_name(cls_name),
-            "confidence": round(float(predictions[0][idx]) * 100, 2),
+            "confidence": round(float(predictions[idx]) * 100, 2),
         })
 
     return {

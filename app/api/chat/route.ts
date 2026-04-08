@@ -38,6 +38,66 @@ interface CallResult {
   status?: number;
 }
 
+async function callAnthropic(
+  apiKey: string,
+  messages: { role: string; content: string }[],
+  model: string
+): Promise<CallResult> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+
+  try {
+    const systemMsg = messages.find(m => m.role === "system");
+    const userMessages = messages.filter(m => m.role !== "system");
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 1000,
+        system: systemMsg?.content,
+        messages: userMessages,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const status = response.status;
+      const errorType = errorData?.error?.type || "";
+
+      if (status === 401 || errorType === "authentication_error") {
+        return { error: "invalid_key", status: 401 };
+      }
+      if (status === 429 || errorType === "rate_limit_error") {
+        return { error: "quota", status: 429 };
+      }
+      console.error("Anthropic API error:", errorData);
+      return { error: `api_error_${status}`, status };
+    }
+
+    const data = await response.json();
+    const content = data.content?.[0]?.text;
+    if (!content) {
+      return { error: "empty_response", status: 200 };
+    }
+    return { message: content };
+  } catch (err: unknown) {
+    clearTimeout(timeout);
+    if (err instanceof Error && err.name === "AbortError") {
+      return { error: "timeout", status: 504 };
+    }
+    return { error: "network", status: 503 };
+  }
+}
+
 async function callOpenAICompatible(
   baseUrl: string,
   apiKey: string,
@@ -151,8 +211,24 @@ export async function POST(request: NextRequest) {
 
     const groqKey = process.env.GROQ_API_KEY;
     const openaiKey = process.env.OPENAI_API_KEY;
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
 
-    // ── 1. Try Groq first (free, fast Llama 3.3 70b) ─────────────────────────
+    // ── 1. Try Anthropic Claude first ───────────────────────────────────────────
+    if (anthropicKey && anthropicKey.length > 20) {
+      const result = await callAnthropic(
+        anthropicKey,
+        conversationHistory,
+        "claude-sonnet-4-20250514"
+      );
+      if (result.message) {
+        return NextResponse.json({ message: result.message, provider: "anthropic" });
+      }
+      if (result.error !== "invalid_key" && result.error !== "quota") {
+        console.warn("Anthropic failed:", result.error, "— trying Groq fallback");
+      }
+    }
+
+    // ── 2. Try Groq (free, fast Llama 3.3 70b) ─────────────────────────────────
     if (groqKey && groqKey.length > 20) {
       const result = await callOpenAICompatible(
         "https://api.groq.com/openai/v1",
