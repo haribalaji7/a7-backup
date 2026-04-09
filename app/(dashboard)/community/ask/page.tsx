@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Send, CheckCircle } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
 
 const CATEGORIES = [
   { value: "crop", label: "Crop/Plant Health", icon: "🌱" },
@@ -13,6 +14,7 @@ const CATEGORIES = [
 
 export default function AskQuestionPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: "",
     category: "",
@@ -46,7 +48,6 @@ export default function AskQuestionPage() {
     setLoading(true);
 
     try {
-      const userName = localStorage.getItem("user_name") || "Anonymous Farmer";
       const res = await fetch("/api/community/questions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -54,7 +55,8 @@ export default function AskQuestionPage() {
           title: formData.title,
           content: formData.content,
           category: formData.category,
-          user_name: userName,
+          user_id: user?.id || null,
+          user_name: user?.email?.split('@')[0] || "Anonymous Farmer",
         }),
       });
 

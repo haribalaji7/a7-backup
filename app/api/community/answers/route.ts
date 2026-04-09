@@ -42,10 +42,8 @@ export async function POST(request: NextRequest) {
         {
           question_id,
           content,
-          user_id: user_id || "anonymous",
+          user_id: user_id || null,
           user_name: user_name || "Anonymous Farmer",
-          is_accepted: false,
-          upvotes: 0,
         },
       ])
       .select()
@@ -54,8 +52,6 @@ export async function POST(request: NextRequest) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-
-    await supabase.rpc("increment_answers_count", { question_id });
 
     return NextResponse.json({ answer: data });
   } catch (error) {

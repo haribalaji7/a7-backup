@@ -3,9 +3,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Leaf, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -17,10 +19,28 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    setTimeout(() => {
-      localStorage.setItem("isAuthenticated", "true");
-      router.push("/");
-    }, 1000);
+    try {
+      const { error: authError } = await signIn(email, password);
+      
+      if (authError) {
+        const errorMsg = authError.message;
+        if (errorMsg.includes("rate limit") || errorMsg.includes("Too many requests")) {
+          setError("Too many login attempts. Please wait a few minutes before trying again.");
+        } else if (errorMsg.includes("Email not confirmed")) {
+          setError("Please confirm your email first. Check your inbox for the confirmation link.");
+        } else if (errorMsg.includes("Invalid login credentials")) {
+          setError("Invalid email or password. Please try again.");
+        } else {
+          setError(errorMsg);
+        }
+        setLoading(false);
+      } else {
+        router.push("/");
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+      setLoading(false);
+    }
   };
 
   return (

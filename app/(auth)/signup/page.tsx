@@ -3,26 +3,110 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Leaf, Mail, Lock, Eye, EyeOff, Loader2, User } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { signUp } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    setTimeout(() => {
-      localStorage.setItem("isAuthenticated", "true");
-      router.push("/setup");
-    }, 1000);
+    try {
+      const { error: authError } = await signUp(email, password, name);
+      
+      if (authError) {
+        const errorMsg = authError.message;
+        if (errorMsg.includes("rate limit") || errorMsg.includes("Too many requests")) {
+          setError("Too many signup attempts. Please try again in a few minutes or contact support.");
+        } else if (errorMsg.includes("User already registered") || errorMsg.includes("already been registered")) {
+          setError("This email is already registered. Please login instead.");
+        } else {
+          setError(errorMsg);
+        }
+        setLoading(false);
+      } else {
+        setSignupSuccess(true);
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+      setLoading(false);
+    }
   };
+
+  if (signupSuccess) {
+    return (
+      <div style={{ display: "flex", minHeight: "100vh" }}>
+        <motion.div
+          initial={{ scale: 1.1, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.8 }}
+          style={{
+            flex: 1,
+            background: "linear-gradient(135deg, #166534 0%, #22c55e 50%, #15803d 100%)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 40,
+          }}
+        >
+          <div style={{
+            width: 80, height: 80,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.2)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto 24px",
+          }}>
+            <Leaf size={40} color="white" />
+          </div>
+          <h1 style={{ fontSize: 36, fontWeight: 700, color: "white", marginBottom: 12 }}>
+            Smart Agri AI
+          </h1>
+        </motion.div>
+
+        <div style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 40,
+          background: "#f8fafc",
+        }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{ width: "100%", maxWidth: 400, textAlign: "center" }}
+          >
+            <div style={{ fontSize: 24, fontWeight: 700, color: "#14532d", marginBottom: 16 }}>
+              Check your email!
+            </div>
+            <p style={{ color: "#6b7280", marginBottom: 24 }}>
+              We've sent a confirmation link to <strong>{email}</strong>. 
+              Click the link in your email to activate your account.
+            </p>
+            <p style={{ fontSize: 13, color: "#9ca3af", marginBottom: 24 }}>
+              Also check your spam folder if you don't see the email.
+            </p>
+            <a href="/login" style={{ color: "#16a34a", fontWeight: 600, textDecoration: "none" }}>
+              Back to Login
+            </a>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>

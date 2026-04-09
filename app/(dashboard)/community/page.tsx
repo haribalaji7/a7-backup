@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MessageCircle, Plus, Eye, Clock, ChevronRight } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
 
 const CATEGORIES = [
   { value: "all", label: "All Questions", icon: "📋" },
@@ -68,15 +69,13 @@ const DEMO_QUESTIONS = [
 
 export default function CommunityPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [questions, setQuestions] = useState<typeof DEMO_QUESTIONS>([]);
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState("newest");
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const auth = localStorage.getItem("isAuthenticated");
-    setIsAuthenticated(auth === "true");
     fetchQuestions();
   }, [category, sort]);
 
@@ -119,7 +118,7 @@ export default function CommunityPage() {
             Ask questions, share knowledge, help fellow farmers
           </div>
         </div>
-        {isAuthenticated && (
+                {user && (
           <Link href="/community/ask" className="btn btn-green" style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Plus size={16} />
             Ask Question
@@ -191,7 +190,7 @@ export default function CommunityPage() {
               <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 16 }}>
                 Be the first to ask a question!
               </div>
-              {isAuthenticated && (
+              {user && (
                 <Link href="/community/ask" className="btn btn-green">
                   Ask Question
                 </Link>

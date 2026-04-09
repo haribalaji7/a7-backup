@@ -45,10 +45,8 @@ export async function POST(request: NextRequest) {
           title,
           content,
           category,
-          user_id: user_id || "anonymous",
+          user_id: user_id || null,
           user_name: user_name || "Anonymous Farmer",
-          answers_count: 0,
-          views: 0,
         },
       ])
       .select()

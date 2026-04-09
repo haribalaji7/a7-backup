@@ -32,3 +32,4 @@ There is currently a mismatch in your codebase:
 If you want the app to place a **bounding box** exactly over the diseased part of the leaf:
 *   **Actionable Step:** Migrate from pure Classification to **YOLOv8** or **YOLOv11** (by Ultralytics).
 *   **Why:** This is the #1 trending approach in GitHub's crop-disease-detection topic because it visually proves to the user exactly where the disease is located, drastically increasing user trust.
+     

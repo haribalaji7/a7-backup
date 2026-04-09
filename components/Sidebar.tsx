@@ -5,6 +5,7 @@ import {
   Home, ScanLine, Leaf, Cloud, BarChart2, Map, Satellite, MessageSquare, DollarSign, TrendingUp, Sun, Moon, LogOut, MessageCircle, Phone, LucideIcon
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
+import { useAuth } from "./AuthProvider";
 
 const navItems = [
   { label: "Home", icon: Home, href: "/" },
@@ -50,9 +51,10 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
+  const { signOut, user } = useAuth();
 
-  const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
+  const handleLogout = async () => {
+    await signOut();
     router.push("/login");
   };
 

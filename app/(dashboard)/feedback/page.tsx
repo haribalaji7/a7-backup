@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import { MessageCircle, Send, CheckCircle, Star } from "lucide-react";
+import { supabase } from "@/services/supabase";
+import { useAuth } from "@/components/AuthProvider";
 
 const feedbackTypes = [
   { value: "general", label: "General Feedback" },
@@ -10,6 +12,7 @@ const feedbackTypes = [
 ];
 
 export default function FeedbackPage() {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -18,10 +21,26 @@ export default function FeedbackPage() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [rating, setRating] = useState(0);
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSaving(true);
+    
+    const { error } = await supabase.from("feedback").insert({
+      user_id: user?.id || null,
+      name: formData.name || null,
+      email: formData.email || null,
+      type: formData.type,
+      message: formData.message,
+      rating,
+    });
+
+    setSaving(false);
+    
+    if (!error) {
+      setSubmitted(true);
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -136,9 +155,9 @@ export default function FeedbackPage() {
             />
           </div>
 
-          <button type="submit" className="btn btn-green" style={{ width: "100%" }}>
+          <button type="submit" className="btn btn-green" style={{ width: "100%" }} disabled={saving}>
             <Send size={16} />
-            Submit Feedback
+            {saving ? "Submitting..." : "Submit Feedback"}
           </button>
         </form>
       </div>

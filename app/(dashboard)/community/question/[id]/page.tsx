@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, Send, ThumbsUp, CheckCircle, Circle, MessageCircle, Eye } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
 
 const DEMO_QUESTIONS: Record<string, {
   title: string;
@@ -163,17 +164,15 @@ export default function QuestionDetailPage() {
   const router = useRouter();
   const params = useParams();
   const questionId = params.id as string;
+  const { user } = useAuth();
 
   const [question, setQuestion] = useState<typeof DEMO_QUESTIONS[string] | null>(null);
   const [answers, setAnswers] = useState<typeof DEMO_ANSWERS[string]>([]);
   const [newAnswer, setNewAnswer] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const auth = localStorage.getItem("isAuthenticated");
-    setIsAuthenticated(auth === "true");
     fetchQuestionAndAnswers();
   }, [questionId]);
 
@@ -213,14 +212,14 @@ export default function QuestionDetailPage() {
 
     setSubmitting(true);
     try {
-      const userName = localStorage.getItem("user_name") || "Anonymous Farmer";
       const res = await fetch("/api/community/answers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question_id: questionId,
           content: newAnswer,
-          user_name: userName,
+          user_id: user?.id || null,
+          user_name: user?.email?.split('@')[0] || "Anonymous Farmer",
         }),
       });
 
@@ -233,7 +232,7 @@ export default function QuestionDetailPage() {
       const newAnswerObj = {
         id: `local-${Date.now()}`,
         content: newAnswer,
-        user_name: localStorage.getItem("user_name") || "Anonymous Farmer",
+        user_name: user?.email?.split('@')[0] || "Anonymous Farmer",
         created_at: new Date().toISOString(),
         upvotes: 0,
         is_accepted: false,
@@ -400,7 +399,7 @@ export default function QuestionDetailPage() {
         </div>
       )}
 
-      {isAuthenticated ? (
+      {user ? (
         <div className="card">
           <div style={{ fontSize: 14, fontWeight: 600, color: "#1f2937", marginBottom: 12 }}>
             Your Answer
