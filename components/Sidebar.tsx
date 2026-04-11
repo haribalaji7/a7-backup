@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Home, ScanLine, Leaf, Cloud, BarChart2, Map, Satellite, MessageSquare, DollarSign, TrendingUp, Sun, Moon, LogOut, MessageCircle, Phone, LucideIcon
+  Home, ScanLine, Leaf, Cloud, BarChart2, Map, Satellite, MessageSquare, DollarSign, TrendingUp, Sun, Moon, LogOut, MessageCircle, Phone, LucideIcon, Landmark, Newspaper
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { useAuth } from "./AuthProvider";
@@ -10,17 +10,17 @@ import { useAuth } from "./AuthProvider";
 const navItems = [
   { label: "Home", icon: Home, href: "/" },
   { label: "Farm Setup", icon: Leaf, href: "/setup" },
-  { label: "Scan", icon: ScanLine, href: "/scan" },
+  { label: "Farmers Hub", icon: Landmark, href: "/farmers-hub" },
+  { label: "Scan & Crop Recommendation", icon: ScanLine, href: "/scan" },
   { label: "Satellite", icon: Satellite, href: "/satellite" },
   { label: "Crop Prices", icon: TrendingUp, href: "/crop-price" },
-  { label: "Assistant", icon: MessageSquare, href: "/assistant" },
+  { label: "Farm Assistant", icon: MessageSquare, href: "/assistant" },
 ];
 
 const section2Items = [
   { label: "Soil", icon: Leaf, href: "/soil" },
   { label: "Weather", icon: Cloud, href: "/weather" },
   { label: "Map", icon: Map, href: "/farm-map" },
-  { label: "Analytics", icon: BarChart2, href: "/analytics" },
 ];
 
 const section3Items = [

@@ -2,7 +2,10 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Cloud, TrendingUp, AlertTriangle } from "lucide-react";
+import { Cloud, TrendingUp, AlertTriangle, Newspaper, Landmark } from "lucide-react";
+
+const SchemeCard = dynamic(() => import("@/components/farmers/SchemeCard"), { ssr: false });
+const NewsSection = dynamic(() => import("@/components/farmers/NewsSection"), { ssr: false });
 
 const SoilChart = dynamic(
   () => import("@/components/SoilChart"),
@@ -92,6 +95,13 @@ export default function HomePage() {
   const [setupData, setSetupData] = useState<SetupData | null>(null);
   const [weather, setWeather] = useState<HomeWeather | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState<"schemes" | "news">("schemes");
+  const [schemes, setSchemes] = useState<any[]>([]);
+  const [news, setNews] = useState<any[]>([]);
+  const [schemeCategory, setSchemeCategory] = useState("all");
+  const [newsCategory, setNewsCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setMounted(true);
@@ -129,6 +139,26 @@ export default function HomePage() {
       );
     }
   }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [schemesRes, newsRes] = await Promise.all([
+          fetch(`/api/schemes?category=${schemeCategory}&search=${searchQuery}`),
+          fetch(`/api/news?category=${newsCategory}`),
+        ]);
+        const schemesData = await schemesRes.json();
+        const newsData = await newsRes.json();
+        setSchemes(schemesData.schemes || []);
+        setNews(newsData.news || []);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [schemeCategory, newsCategory]);
 
   const activeAlerts = useMemo(() => alerts.filter(a => a.type !== "green"), []);
   const alertCount = activeAlerts.length;
@@ -258,6 +288,103 @@ export default function HomePage() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="card farmers-hub" style={{ marginTop: 24, padding: 24 }}>
+        <div className="farmers-hub-header">
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ 
+              background: "linear-gradient(135deg, #16a34a, #15803d)", 
+              padding: 10, 
+              borderRadius: 12,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}>
+              <Landmark size={20} color="white" />
+            </div>
+            <div>
+              <div className="section-title" style={{ marginBottom: 0 }}>Farmers Hub</div>
+              <div style={{ fontSize: 12, color: "#6b7280" }}>Government Schemes & Daily News</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="farmers-tabs">
+          <button 
+            className={`farmers-tab ${activeTab === "schemes" ? "active" : ""}`}
+            onClick={() => setActiveTab("schemes")}
+          >
+            <Landmark size={14} style={{ display: "inline", marginRight: 6 }} />
+            Schemes
+          </button>
+          <button 
+            className={`farmers-tab ${activeTab === "news" ? "active" : ""}`}
+            onClick={() => setActiveTab("news")}
+          >
+            <Newspaper size={14} style={{ display: "inline", marginRight: 6 }} />
+            News
+          </button>
+        </div>
+
+        <div className="farmers-filter">
+          {activeTab === "schemes" ? (
+            <>
+              <input 
+                type="text" 
+                className="farmers-search" 
+                placeholder="Search schemes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <select 
+                className="farmers-select"
+                value={schemeCategory}
+                onChange={(e) => setSchemeCategory(e.target.value)}
+              >
+                <option value="all">All Categories</option>
+                <option value="Financial">Financial</option>
+                <option value="Insurance">Insurance</option>
+                <option value="Credit">Credit</option>
+                <option value="Equipment">Equipment</option>
+                <option value="Organic Farming">Organic Farming</option>
+                <option value="Production">Production</option>
+                <option value="Horticulture">Horticulture</option>
+                <option value="Infrastructure">Infrastructure</option>
+              </select>
+            </>
+          ) : (
+            <select 
+              className="farmers-select"
+              value={newsCategory}
+              onChange={(e) => setNewsCategory(e.target.value)}
+              style={{ minWidth: 160 }}
+            >
+              <option value="all">All Categories</option>
+              <option value="Schemes">Schemes</option>
+              <option value="Weather">Weather</option>
+              <option value="Market">Market</option>
+              <option value="Crop Health">Crop Health</option>
+              <option value="Logistics">Logistics</option>
+            </select>
+          )}
+        </div>
+
+        {loading ? (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="farmers-skeleton" style={{ height: 200 }} />
+            ))}
+          </div>
+        ) : activeTab === "schemes" ? (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+            {schemes.map((scheme) => (
+              <SchemeCard key={scheme.id} scheme={scheme} />
+            ))}
+          </div>
+        ) : (
+          <NewsSection news={news} />
+        )}
       </div>
     </div>
   );

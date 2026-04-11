@@ -16,7 +16,44 @@ interface MandiPrice {
 }
 
 const COMMODITIES = ["Rice", "Wheat", "Cotton", "Corn", "Soybean", "Sugarcane", "Potato", "Onion", "Tomato"];
-const STATES = ["Tamil_Nadu", "Maharashtra", "Punjab", "Karnataka", "Madhya_Pradesh", "Gujarat", "Uttar_Pradesh", "Haryana", "Rajasthan", "Kerala"];
+const STATES = [
+  "Andhra_Pradesh",
+  "Arunachal_Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal_Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya_Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil_Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar_Pradesh",
+  "Uttarakhand",
+  "West_Bengal",
+  "Andaman_and_Nicobar_Islands",
+  "Chandigarh",
+  "Dadra_and_Nagar_Haveli_and_Daman_and_Diu",
+  "Delhi",
+  "Jammu_and_Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry"
+];
 
 const DEMO_DATA: MandiPrice[] = [
   // Tamil Nadu - Rice
@@ -80,8 +117,6 @@ export default function CropPricePage() {
   const [state, setState] = useState("Tamil_Nadu");
   const [data, setData] = useState<MandiPrice[]>([]);
   const [loading, setLoading] = useState(false);
-  const [apiKey, setApiKey] = useState("");
-  const [useDemo, setUseDemo] = useState(true);
 
   useEffect(() => {
     fetchPrices();
@@ -89,28 +124,12 @@ export default function CropPricePage() {
 
   const fetchPrices = async () => {
     setLoading(true);
-    if (useDemo || !apiKey) {
-      await new Promise(r => setTimeout(r, 800));
-      const filtered = DEMO_DATA.filter(d => 
-        d.commodity === commodity && 
-        (state === "All" || d.state === state)
-      );
-      setData(filtered.length ? filtered : DEMO_DATA.filter(d => d.commodity === commodity));
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const resourceId = "9ef273d6-b1da-4573-bc9a-9ef854371424";
-      const url = `https://api.datagov.in/resource/${resourceId}?api-key=${apiKey}&format=json&filters[state]=${state}&filters[commodity]=${commodity}`;
-      const res = await fetch(url);
-      const json = await res.json();
-      if (json.records) {
-        setData(json.records);
-      }
-    } catch (err) {
-      console.error("API Error:", err);
-    }
+    await new Promise(r => setTimeout(r, 800));
+    const filtered = DEMO_DATA.filter(d => 
+      d.commodity === commodity && 
+      (state === "All" || d.state === state)
+    );
+    setData(filtered.length ? filtered : DEMO_DATA.filter(d => d.commodity === commodity));
     setLoading(false);
   };
 
@@ -153,20 +172,6 @@ export default function CropPricePage() {
               {STATES.map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
             </select>
           </div>
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <label className="field-label">API Key (optional)</label>
-            <input 
-              type="password" 
-              className="field-input" 
-              placeholder="Enter API key for live data"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-            />
-          </div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', paddingBottom: 8 }}>
-            <input type="checkbox" checked={useDemo} onChange={(e) => setUseDemo(e.target.checked)} />
-            <span style={{ fontSize: 13 }}>Demo Mode</span>
-          </label>
         </div>
       </div>
 

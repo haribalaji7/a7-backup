@@ -1,15 +1,15 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, CheckCircle } from "lucide-react";
+import { ArrowLeft, Send, CheckCircle, HelpCircle, Image as ImageIcon } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 
 const CATEGORIES = [
-  { value: "crop", label: "Crop/Plant Health", icon: "🌱" },
-  { value: "soil", label: "Soil & Fertilizers", icon: "🌿" },
-  { value: "irrigation", label: "Irrigation & Water", icon: "💧" },
-  { value: "weather", label: "Weather & Climate", icon: "🌤️" },
-  { value: "general", label: "General Farming", icon: "🚜" },
+  { value: "crop", label: "Crop/Plant Health", icon: "🌱", description: "Diseases, pests, growth issues" },
+  { value: "soil", label: "Soil & Fertilizers", icon: "🌿", description: "Soil health, nutrients, amendments" },
+  { value: "irrigation", label: "Irrigation & Water", icon: "💧", description: "Water management, scheduling" },
+  { value: "weather", label: "Weather & Climate", icon: "🌤️", description: "Climate impact, forecasts" },
+  { value: "general", label: "General Farming", icon: "🚜", description: "Best practices, advice" },
 ];
 
 export default function AskQuestionPage() {
@@ -78,19 +78,16 @@ export default function AskQuestionPage() {
 
   if (submitted) {
     return (
-      <div>
-        <div className="page-title">Question Posted!</div>
-        <div className="page-subtitle">Your question has been submitted successfully</div>
-
-        <div className="card" style={{ textAlign: "center", padding: 48, marginTop: 20 }}>
-          <CheckCircle size={64} color="#22c55e" style={{ marginBottom: 16 }} />
-          <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 8, color: "var(--text-dark)" }}>
-            Thank you for your question!
+      <div className="ask-success">
+        <div className="ask-success-card">
+          <div className="ask-success-icon">
+            <CheckCircle size={48} />
           </div>
-          <div style={{ fontSize: 14, color: "var(--text-muted)", marginBottom: 24 }}>
-            Farmers in the community will answer your question soon.
-          </div>
-          <button onClick={() => router.push("/community")} className="btn btn-green">
+          <h2 className="ask-success-title">Question Posted!</h2>
+          <p className="ask-success-message">
+            Your question has been submitted successfully. Farmers in the community will answer your question soon.
+          </p>
+          <button onClick={() => router.push("/community")} className="ask-success-btn">
             Back to Community
           </button>
         </div>
@@ -99,134 +96,148 @@ export default function AskQuestionPage() {
   }
 
   return (
-    <div>
-      <button
-        onClick={() => router.push("/community")}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          background: "none",
-          border: "none",
-          color: "#6b7280",
-          fontSize: 14,
-          cursor: "pointer",
-          marginBottom: 16,
-          padding: 0,
-        }}
-      >
-        <ArrowLeft size={16} />
-        Back to Community
-      </button>
-
-      <div className="page-title" style={{ marginBottom: 4 }}>Ask a Question</div>
-      <div className="page-subtitle" style={{ marginBottom: 20 }}>
-        Get help from the farming community
-      </div>
-
-      <div className="card" style={{ maxWidth: 700 }}>
-        <form onSubmit={handleSubmit}>
-          {error && (
-            <div style={{
-              padding: "12px 16px",
-              background: "#fef2f2",
-              border: "1px solid #fecaca",
-              borderRadius: 8,
-              color: "#dc2626",
-              fontSize: 13,
-              marginBottom: 20,
-            }}>
-              {error}
-            </div>
-          )}
-
-          <div className="field">
-            <label className="field-label">Question Title</label>
-            <input
-              type="text"
-              className="field-input"
-              placeholder="e.g., My tomato plants have yellow leaves with brown spots..."
-              value={formData.title}
-              onChange={(e) => handleChange("title", e.target.value)}
-              maxLength={200}
-            />
-            <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>
-              {formData.title.length}/200 characters
-            </div>
+    <div className="ask-container">
+      {/* Header */}
+      <div className="ask-header">
+        <button onClick={() => router.push("/community")} className="ask-back-btn">
+          <ArrowLeft size={18} />
+          Back to Community
+        </button>
+        
+        <div className="ask-header-content">
+          <HelpCircle size={28} className="ask-header-icon" />
+          <div>
+            <h1 className="ask-title">Ask a Question</h1>
+            <p className="ask-subtitle">Get help from thousands of experienced farmers</p>
           </div>
-
-          <div className="field">
-            <label className="field-label">Category</label>
-            <select
-              className="field-select"
-              value={formData.category}
-              onChange={(e) => handleChange("category", e.target.value)}
-            >
-              <option value="">Select a category...</option>
-              {CATEGORIES.map((cat) => (
-                <option key={cat.value} value={cat.value}>
-                  {cat.icon} {cat.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="field">
-            <label className="field-label">Question Details</label>
-            <textarea
-              className="field-input"
-              placeholder="Describe your question in detail. Include relevant information like crop type, soil type, weather conditions, etc..."
-              value={formData.content}
-              onChange={(e) => handleChange("content", e.target.value)}
-              rows={8}
-              maxLength={5000}
-              style={{ resize: "vertical" }}
-            />
-            <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>
-              {formData.content.length}/5000 characters - minimum 20 characters
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-            <button
-              type="button"
-              onClick={() => router.push("/community")}
-              className="btn"
-              style={{
-                background: "white",
-                border: "1px solid #e5e7eb",
-                color: "#374151",
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn-green"
-              disabled={loading}
-              style={{ display: "flex", alignItems: "center", gap: 8, opacity: loading ? 0.6 : 1 }}
-            >
-              {loading ? "Posting..." : (
-                <>
-                  <Send size={16} />
-                  Post Question
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div className="card" style={{ maxWidth: 700, marginTop: 20, background: "#f9fafb" }}>
-        <div style={{ fontSize: 13, fontWeight: 500, color: "#374151", marginBottom: 8 }}>
-          Tips for getting better answers:
         </div>
-        <ul style={{ fontSize: 12, color: "#6b7280", paddingLeft: 16, lineHeight: 1.8 }}>
-          <li>Be specific and clear about your problem</li>
-          <li>Include details like crop variety, soil type, weather</li>
-          <li>Mention what you've already tried</li>
-          <li>Add photos if possible (you can describe them)</li>
-        </ul>
+      </div>
+
+      <div className="ask-layout">
+        {/* Form */}
+        <div className="ask-form-card">
+          <form onSubmit={handleSubmit}>
+            {error && (
+              <div className="ask-error">
+                {error}
+              </div>
+            )}
+
+            <div className="ask-field">
+              <label className="ask-label">
+                Question Title <span className="ask-required">*</span>
+              </label>
+              <input
+                type="text"
+                className="ask-input"
+                placeholder="e.g., My tomato plants have yellow leaves with brown spots..."
+                value={formData.title}
+                onChange={(e) => handleChange("title", e.target.value)}
+                maxLength={200}
+              />
+              <div className="ask-char-count">
+                {formData.title.length}/200 characters
+              </div>
+            </div>
+
+            <div className="ask-field">
+              <label className="ask-label">
+                Category <span className="ask-required">*</span>
+              </label>
+              <div className="ask-categories">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.value}
+                    type="button"
+                    onClick={() => handleChange("category", cat.value)}
+                    className={`ask-category-btn ${formData.category === cat.value ? 'active' : ''}`}
+                  >
+                    <span className="ask-category-icon">{cat.icon}</span>
+                    <div className="ask-category-info">
+                      <span className="ask-category-label">{cat.label}</span>
+                      <span className="ask-category-desc">{cat.description}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="ask-field">
+              <label className="ask-label">
+                Question Details <span className="ask-required">*</span>
+              </label>
+              <textarea
+                className="ask-textarea"
+                placeholder="Describe your question in detail. Include relevant information like crop type, soil type, weather conditions, symptoms, what you've already tried, etc..."
+                value={formData.content}
+                onChange={(e) => handleChange("content", e.target.value)}
+                rows={8}
+                maxLength={5000}
+              />
+              <div className="ask-char-count">
+                {formData.content.length}/5000 characters
+              </div>
+            </div>
+
+            <div className="ask-actions">
+              <button
+                type="button"
+                onClick={() => router.push("/community")}
+                className="ask-cancel-btn"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="ask-submit-btn"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <div className="ask-spinner" />
+                    Posting...
+                  </>
+                ) : (
+                  <>
+                    <Send size={16} />
+                    Post Question
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Tips Sidebar */}
+        <div className="ask-tips">
+          <div className="ask-tips-card">
+            <h3 className="ask-tips-title">💡 Tips for Great Questions</h3>
+            <ul className="ask-tips-list">
+              <li>
+                <strong>Be specific</strong> - Include crop variety, location, and symptoms
+              </li>
+              <li>
+                <strong>Add context</strong> - Weather conditions, soil type, recent activities
+              </li>
+              <li>
+                <strong>What you tried</strong> - Mention solutions you've already attempted
+              </li>
+              <li>
+                <strong>Use photos</strong> - Describe visual symptoms clearly
+              </li>
+              <li>
+                <strong>One question at a time</strong> - Focus on a single issue for better answers
+              </li>
+            </ul>
+          </div>
+
+          <div className="ask-tips-card ask-tips-example">
+            <h3 className="ask-tips-title">✅ Good Example</h3>
+            <p className="ask-tips-text">
+              "My tomato plants (Roma variety) in Maharashtra have yellow lower leaves with brown circular spots. Started 5 days ago after heavy rain. Using loamy soil. Already tried neem spray but no improvement."
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
