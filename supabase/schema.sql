@@ -1,4 +1,4 @@
--- Smart Agri AI - Supabase Database Schema
+-- Agri Nova - Supabase Database Schema
 -- Run this in the Supabase SQL Editor
 
 -- Users table (extends Supabase auth)

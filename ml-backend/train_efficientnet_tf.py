@@ -1,5 +1,5 @@
 """
-Smart Agri AI - EfficientNet Model Training (Local Data Only)
+Agri Nova - EfficientNet Model Training (Local Data Only)
 Trains on PlantVillage-Dataset-master/raw/color (38 classes).
 Exports a .keras model that main.py auto-loads on startup.
 """
@@ -30,7 +30,7 @@ FINE_TUNE_LR = 1e-5       # for phase-2 unfreezing
 
 def main():
     print("=" * 60)
-    print(" Smart Agri AI – EfficientNetB0 Training (Local Dataset)")
+    print(" Agri Nova – EfficientNetB0 Training (Local Dataset)")
     print("=" * 60)
 
     if not os.path.isdir(DATASET_DIR):

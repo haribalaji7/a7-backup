@@ -6,7 +6,7 @@ interface WeatherTrendChartProps {
 
 export default function WeatherTrendChart({ data }: WeatherTrendChartProps) {
   return (
-    <ResponsiveContainer width="100%" height={180}>
+    <ResponsiveContainer width="100%" height={280}>
       <LineChart data={data}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
         <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />

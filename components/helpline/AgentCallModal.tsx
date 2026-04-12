@@ -68,7 +68,7 @@ const languages: { id: LanguageCode; label: string; voiceLang: string }[] = [
 ];
 
 const translations: Record<LanguageCode, { status: string; agent: string; listening: string; thinking: string; speaking: string }> = {
-  en: { status: "Connecting...", agent: "Agri AI Expert", listening: "Listening...", thinking: "Thinking...", speaking: "Speaking..." },
+  en: { status: "Connecting...", agent: "Agri Nova Expert", listening: "Listening...", thinking: "Thinking...", speaking: "Speaking..." },
   ta: { status: "இணைக்கிறது...", agent: "வேளாண் AI நிபுணர்", listening: "கேட்கிறது...", thinking: "நினைக்கிறது...", speaking: "பேசுகிறது..." },
   kn: { status: "ಸಂಪರ್ಕಿಸುತ್ತಿದೆ...", agent: "ಕೃಷಿ AI ತಜ್ಞ", listening: "ಕೇಳುತ್ತಿದೆ...", thinking: "ಯೋಚಿಸುತ್ತಿದೆ...", speaking: "ಮಾತಾಡುತ್ತಿದೆ..." },
   ml: { status: "ബന്ധിപ്പിക്കുന്നു...", agent: "കൃഷി AI വിദഗ്ധൻ", listening: "കേട്ടുകൊണ്ടിരിക്കുന്നു...", thinking: "ചിന്തിക്കുന്നു...", speaking: "സംസാരിക്കുന്നു..." },

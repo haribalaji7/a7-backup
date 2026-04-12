@@ -16,7 +16,7 @@ const LANGUAGES: Record<LanguageCode, { name: string; native: string }> = {
 const CALL_MESSAGES = {
   en: {
     connecting: "Connecting to AI Agent...",
-    connected: "Connected with Smart Agri AI",
+    connected: "Connected with Agri Nova",
     speaking: "Speaking...",
     listening: "Listening...",
     muted: "Muted",
@@ -25,7 +25,7 @@ const CALL_MESSAGES = {
   },
   ta: {
     connecting: "AI Agent உடன் இணைக்கிறது...",
-    connected: "Smart Agri AI உடன் இணைக்கப்பட்டது",
+    connected: "Agri Nova உடன் இணைக்கப்பட்டது",
     speaking: "பேசுகிறது...",
     listening: "கவனிக்கிறது...",
     muted: "முடக்கப்பட்டது",
@@ -34,7 +34,7 @@ const CALL_MESSAGES = {
   },
   te: {
     connecting: "AI Agent কে connect、广州...",
-    connected: "Smart Agri AI 广州 connected",
+    connected: "Agri Nova 广州 connected",
     speaking: "Speaking...",
     listening: "Listening...",
     muted: "Muted",
@@ -43,7 +43,7 @@ const CALL_MESSAGES = {
   },
   ml: {
     connecting: "AI Agent മായി ബന്ധിപ്പിക്കുന്നു...",
-    connected: "Smart Agri AI മായി ബന്ധിപ്പിച്ചു",
+    connected: "Agri Nova മായി ബന്ധിപ്പിച്ചു",
     speaking: "Speaking...",
     listening: "Listening...",
     muted: "Muted",
@@ -52,7 +52,7 @@ const CALL_MESSAGES = {
   },
   kn: {
     connecting: "AI Agentಗೆ ಸಂಪರ್ಕ ಮಾಡುತ್ತಿದೆ...",
-    connected: "Smart Agri AI ಸಂಪರ್ಕಗೊಂಡಿದೆ",
+    connected: "Agri Nova ಸಂಪರ್ಕಗೊಂಡಿದೆ",
     speaking: "ಮಾತಾಡುತ್ತಿದೆ...",
     listening: "ಕೇಳುತ್ತಿದೆ...",
     muted: "ಮ್ಯೂಟ್",
@@ -208,7 +208,7 @@ export default function AgentCallModal({ isOpen, onClose }: AgentCallModalProps)
 
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <div style={{ fontSize: 22, fontWeight: 700, color: "white", marginBottom: 8 }}>
-                Smart Agri AI
+                Agri Nova
               </div>
               <div style={{ fontSize: 14, color: "rgba(255, 255, 255, 0.8)" }}>
                 {callState === "connecting" ? t("connecting") : t("connected")}

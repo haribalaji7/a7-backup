@@ -4,7 +4,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/components/AuthProvider";
 
 export const metadata: Metadata = {
-  title: "Smart Agri AI – Intelligent Agriculture Platform",
+  title: "Agri Nova – Intelligent Agriculture Platform",
   description: "Modern farm management dashboard with analytics, maps, weather, and finance tracking",
 };
 

@@ -59,7 +59,7 @@ export default function FeedbackPage() {
             We appreciate your feedback!
           </div>
           <div style={{ fontSize: 14, color: "var(--text-muted)", marginBottom: 24 }}>
-            Your input helps us improve Smart Agri AI for all farmers.
+            Your input helps us improve Agri Nova for all farmers.
           </div>
           <button
             className="btn btn-green"
@@ -79,7 +79,7 @@ export default function FeedbackPage() {
   return (
     <div>
       <div className="page-title">Feedback</div>
-      <div className="page-subtitle">Help us improve Smart Agri AI — share your thoughts, report bugs, or suggest features</div>
+      <div className="page-subtitle">Help us improve Agri Nova — share your thoughts, report bugs, or suggest features</div>
 
       <div className="card" style={{ maxWidth: 600 }}>
         <form onSubmit={handleSubmit}>

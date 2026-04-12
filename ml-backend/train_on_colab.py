@@ -1,6 +1,6 @@
 """
 =============================================================================
-Smart Agri AI — Crop Disease Detection Model Training (Google Colab Edition)
+Agri Nova — Crop Disease Detection Model Training (Google Colab Edition)
 =============================================================================
 
 HOW TO USE (Google Colab):

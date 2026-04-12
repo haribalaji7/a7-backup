@@ -1,5 +1,5 @@
 """
-Smart Agri AI - Fast Training (Optimized for CPU)
+Agri Nova - Fast Training (Optimized for CPU)
 """
 import os
 import numpy as np

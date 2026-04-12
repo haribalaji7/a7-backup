@@ -1,5 +1,5 @@
 """
-Smart Agri AI - Enhanced Model Training with EfficientNetB4
+Agri Nova - Enhanced Model Training with EfficientNetB4
 Improved training with advanced augmentation for real-world images
 """
 import os
@@ -126,7 +126,7 @@ def load_data():
 
 def main():
     print("=" * 60)
-    print(" Smart Agri AI - EfficientNetB4 Training")
+    print(" Agri Nova - EfficientNetB4 Training")
     print(" Advanced Augmentation for Real-World Images")
     print("=" * 60)
 

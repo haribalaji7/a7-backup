@@ -7,7 +7,7 @@ import os
 import io
 import json
 
-app = FastAPI(title="Smart Agri AI - Crop Disease Detection API", version="3.0.0")
+app = FastAPI(title="Agri Nova - Crop Disease Detection API", version="3.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -675,7 +675,7 @@ async def startup_event():
 @app.get("/")
 def root():
     return {
-        "message": "Smart Agri AI - Crop Disease Detection API v3.0 (TensorFlow)",
+        "message": "Agri Nova - Crop Disease Detection API v3.0 (TensorFlow)",
         "status": "running",
         "disease_model_loaded": disease_model is not None,
         "num_classes": len(class_names) if class_names else 0,

@@ -184,7 +184,7 @@ def train_with_mixup(model, train_ds, val_ds, epochs, use_mixup=True, callbacks=
 
 def main():
     print("=" * 60)
-    print(" Smart Agri AI - Enhanced EfficientNet Training")
+    print(" Agri Nova - Enhanced EfficientNet Training")
     print(" Features: Advanced Augmentation, Label Smoothing, Fine-tuning")
     print("=" * 60)
 

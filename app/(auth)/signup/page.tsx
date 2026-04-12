@@ -72,7 +72,7 @@ export default function SignupPage() {
             <Leaf size={40} color="white" />
           </div>
           <h1 style={{ fontSize: 36, fontWeight: 700, color: "white", marginBottom: 12 }}>
-            Smart Agri AI
+            Agri Nova
           </h1>
         </motion.div>
 
@@ -149,7 +149,7 @@ export default function SignupPage() {
             <Leaf size={40} color="white" />
           </div>
           <h1 style={{ fontSize: 36, fontWeight: 700, color: "white", marginBottom: 12 }}>
-            Smart Agri AI
+            Agri Nova
           </h1>
           <p style={{ fontSize: 18, color: "rgba(255,255,255,0.9)", maxWidth: 400, lineHeight: 1.6 }}>
             Join thousands of farmers using AI to maximize their yields and profits.

@@ -23,21 +23,75 @@ const LANGUAGES: Record<LanguageCode, { name: string; native: string }> = {
 };
 
 const localizedGreetings: Record<LanguageCode, string> = {
-  en: "Namaste! 🌾 I'm your Smart Agri AI Assistant. I can help with crop management, soil health, pest control, irrigation, and more. How can I assist you today?",
-  ta: "வணக்கம்! 🌾 நான் உங்களின் Smart Agri AI உதவியாளர். பயிர் மேலாண்மை, மண் ஆரோக்கியம், பூச்சி கட்டுப்பாடு, நீர்ப்பாசனம் ஆகியவற்றில் உதவ முடியும். இன்று உங்களுக்கு எப்படி உதவலாம?",
-  te: "నమస్కారం! 🌾 నేను మీ Smart Agri AI అసిస్టెంట్. పంట నిర్వహణ, నేల ఆరోగ్యం, కీటక నియంత్రణ, ప ిరిగేషన్‌లో सहाय्य करू शकतो. ఈ रोजు मी आपली कशी मदत करू शकतो?",
-  ml: "നമസ്കാരം! 🌾 ഞാൻ നിങ്ങളുടെ Smart Agri AI സഹായിയാണ്. കൃഷി മാനേജ്മെന്റ്, മണ്ണിന്റെ ആരോഗ്യം, കീട നിയന്ത്രണം, ജലസേചനം എന്നിവയിൽ സഹായിക്കാൻ കഴിയും. ഇന്ന് എങ്ങനെ സഹായിക്കാനാകും?",
-  kn: "ನಮಸ್ಕಾರ! 🌾 ನಾನು ನಿಮ್ಮ Smart Agri AI ಸಹಾಯಕ. ಬೆಳೆ ನಿರ್ವಹಣೆ, ಮಣ್ಣಿನ ಆರೋಗ್ಯ, ಕೀಟ ನಿಯಂತ್ರಣ, ನೀರಾವರಿಯಲ್ಲಿ ಸಹಾಯ ಮಾಡಬಹುದು. ಇಂದು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",
-  hi: "नमस्ते! 🌾 मैं आपका Smart Agri AI सहायक हूं। मैं फसल प्रबंधन, मिट्टी की स्वास्थ्य, कीट नियंत्रण, सिंचाई में मदद कर सकता हूं। आज मैं आपकी कैसे मदद कर सकता हूं?",
+  en: "Namaste! 🌾 I'm your Agri Nova Assistant. I can help with crop management, soil health, pest control, irrigation, and more. How can I assist you today?",
+  ta: "வணக்கம்! 🌾 நான் உங்களின் Agri Nova உதவியாளர். பயிர் மேலாண்மை, மண் ஆரோக்கியம், பூச்சி கட்டுப்பாடு, நீர்ப்பாசனம் ஆகியவற்றில் உதவ முடியும். இன்று உங்களுக்கு எப்படி உதவலாம?",
+  te: "నమస్కారం! 🌾 నేను మీ Agri Nova అసిస్టెంట్. పంట నిర్వహణ, నేల ఆరోగ్యం, కీటక నియంత్రణ, ప ిరిగేషన్‌లో सहाय्य करू शकतो. ఈ रोजु मी आपली कशी मदत करू शकतो?",
+  ml: "നമസ്കാരം! 🌾 ഞാൻ നിങ്ങളുടെ Agri Nova സഹായിയാണ്. കൃഷി മാനേജ്മെന്റ്, മണ്ണിന്റെ ആരോഗ്യം, കീട നിയന്ത്രണം, ജലസേചനം എന്നിവയിൽ സഹായിക്കാൻ കഴിയും. ഇന്ന് എങ്ങനെ സഹായിക്കാനാകും?",
+  kn: "ನಮಸ್ಕಾರ! 🌾 ನಾನು ನಿಮ್ಮ Agri Nova ಸಹಾಯಕ. ಬೆಳೆ ನಿರ್ವಹಣೆ, ಮಣ್ಣಿನ ಆರೋಗ್ಯ, ಕೀಟ ನಿಯಂತ್ರಣ, ನೀರಾವರಿಯಲ್ಲಿ ಸಹಾಯ ಮಾಡಬಹುದು. ಇಂದು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",
+  hi: "नमस्ते! 🌾 मैं आपका Agri Nova सहायक हूं। मैं फसल प्रबंधन, मिट्टी की स्वास्थ्य, कीट नियंत्रण, सिंचाई में मदद कर सकता हूं। आज मैं आपकी कैसे मदद कर सकता हूं?",
 };
 
 const placeholders: Record<LanguageCode, string> = {
   en: "Ask about crops, soil, weather, pests…",
   ta: "பயிர்கள், மண், வானிலை, பூச்சிகள் பற்றி கேளுங்கள்…",
   te: "పంటలు, నేల, వాతావరణం, కీటకాల గురించి అడుగండి…",
-  ml: "കൃഷി, മണ്ണ്, കാലാവസ്ഥ, കീടങ്ങൾ എന്നിവയെ കുറിച്ച് ചോദിക്കുക…",
+  ml: "കൃഷി, മണ്ണ്, കാലാവസ്ഥ, കീടങ്ങൾ എന്നിവയ�� കുറിച്ച് ചോദിക്കുക…",
   kn: "ಬೆಳೆ, ಮಣ್ಣು, ಹವಾಮಾನ, ಕೀಟಗಳ ಬಗ್ಗೆ ಕೇಳಿ…",
   hi: "फसल, मिट्टी, मौसम, कीटों के बारे में पूछें…",
+};
+
+const quickQuestions: Record<LanguageCode, string[]> = {
+  en: [
+    "How do I improve soil moisture?",
+    "Best fertiliser for wheat in March?",
+    "How to prevent early blight?",
+    "When should I irrigate paddy?",
+    "Natural pest control methods?"
+  ],
+  ta: [
+    "மண் ஈரப்பதத்தை எப்படி மேம்படுத்துவது?",
+    "மார்ச் மாதத்தில் கோதுமைக்கு சிறந்த உரம்?",
+    "ஆரம்ப கர அழிவை தடுப்பது எப்படி?",
+    "அரிசிக்கு எப்போது நீர்ப்பாசனம் செய்வது?",
+    "இயற்கை பூச்சி கட்டுப்பாடு முறைகள்?"
+  ],
+  te: [
+    "నేల లోతును ఎలా మెరుగుపరచుకుంటారు?",
+    "मार्च में गेहूं के लिए सबसे अच्छा खाद?",
+    "early blight ను ఎలా నివారిస్తారు?",
+    "पाले को何时 निर्जल करणे?",
+    " природан методы борьбы с вредителями?"
+  ],
+  ml: [
+    "മണ്ണിലെ ഈരയമത എങ്ങനെ വർദ്ധിപ്പിക്കാം?",
+    "മാര്‍ച്ചില്‍ ഗോതമ്ബിന് ഏറ്റവും നല്ല വളം?",
+    "ആദിമ ബ്ലൈറ്റ് എങ്ങനെ തടയാം?",
+    "അരിക്ക് എപ്പോഴാണ് ജലസേചനം ചെയ്യേണ്ടത്?",
+    "പ്രകൃതിദത്ത കീട നിയന്ത്രണ മാര്‍ഗങ്ങള്‍?"
+  ],
+  kn: [
+    "ಮಣ್ಣಿನ ತೇವಾಂಶವನ್ನು ಹೇಗೆ ಸುಧಾರಿಸುವುದು?",
+    "ಮಾರ್ಚ್ ತಿಂಗಳಲ್ಲಿ ಗೋಧಿಗೆ ಅತ್ಯುತ್ತಮ ರಸಾಯನಗೊಬ್ಬರ?",
+    "ಆರಂಭಿಕ ಬ್ಲೈಟ್ ಅನ್ನು ಹೇಗೆ ತಡೆಗಟ್ಟುವುದು?",
+    "ಅಕ್ಕಿಗೆ ಯಾವಾಗ ನೀರಾವರಿ ಮಾಡಬೇಕು?",
+    "ನೈಸರ್ಗಿಕ ಕೀಟ ನಿಯಂತ್ರಣ ವಿಧಾನಗಳು?"
+  ],
+  hi: [
+    "मिट्टी की नमी कैसे बढ़ाएं?",
+    "मार्च में गेहूं के लिए सबसे अच्छा खाद?",
+    "अलग ब्लाइट को कैसे रोकें?",
+    "धान की सिंचाई कब करनी चाहिए?",
+    "कीट नियंत्रण के प्राकृतिक तरीके?"
+  ]
+};
+
+const farmDataLabels: Record<LanguageCode, { title: string; temp: string; humidity: string; moisture: string; uv: string; high: string }> = {
+  en: { title: "Today's Farm Data", temp: "Temperature", humidity: "Humidity", moisture: "Soil Moisture", uv: "UV Index", high: "High" },
+  ta: { title: "இன்றைய விவசாய தரவு", temp: "வெப்பநிலை", humidity: "ஈரப்பதம்", moisture: "மண் ஈரப்பதம்", uv: "UV குறியீடு", high: "அதிகம்" },
+  te: { title: "నేటి వద్ద డేటా", temp: "ఉష్ణ���ар", humidity: "आर्द्रత", moisture: "नैल लोतु", uv: "UV ఇండ్x", high: "ఎ�్కువ" },
+  ml: { title: "ഇന്നത്തെ ഫാം ഡാറ്റ", temp: "ഊഷായത", humidity: "ഈരയമത", moisture: "മണ്ണിലെ ഈരയമത", uv: "UV സൂചിക", high: "ഉയര്‍ന്ന" },
+  kn: { title: "ಇಂದಿನ ತೋಟ ಡೇಟಾ", temp: "ತಾಪಮಾನ", humidity: "ಆರ್ದ್ರತೆ", moisture: "ಮಣ್ಣಿನ ತೇವಾಂಶ", uv: "UV ಸೂಚಿಕ", high: "ಹೆಚ್ಚು" },
+  hi: { title: "आज का फार्म डेटा", temp: "तापमान", humidity: "नमी", moisture: "मिट्टी की नमी", uv: "यूवी इंडेक्स", high: "उच्च" }
 };
 
 function formatTime() {
@@ -246,6 +300,9 @@ export default function AssistantPage() {
     setError(null);
   };
 
+  const labels = farmDataLabels[lang];
+  const questions = quickQuestions[lang];
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 16 }}>
@@ -440,60 +497,41 @@ export default function AssistantPage() {
           `}</style>
         </div>
 
-           <div className="card" style={{ height: "fit-content" }}>
-           <div className="section-title">{lang === "ta" ? "அவசர் கேள்விகள்" : lang === "te" ? "అవసర ప్రశ్నలు" : lang === "ml" ? "ടെക്ക് ചോദ്യങ്ങൾ" : lang === "kn" ? "ಉತ್ಸಾಹ ಪ್ರಶ್ನೆಗಳು" : "Quick Questions"}</div>
-           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {[
-                {
-                  en: "How do I improve soil moisture?",
-                  hi: "मिट्टी की नमी कैसे बढ़ाएं?",
-                },
-                {
-                  en: "Best fertiliser for wheat in March?",
-                  hi: "मार्च में गेहूं के लिए सबसे अच्छा खाद?",
-                },
-                {
-                  en: "How to prevent early blight?",
-                  hi: "अलग ब्लाइट को कैसे रोकें?",
-                },
-                {
-                  en: "When should I irrigate paddy?",
-                  hi: "धान की सिंचाई कब करनी चाहिए?",
-                },
-                {
-                  en: "Natural pest control methods?",
-                  hi: "कीट नियंत्रण के प्राकृतिक तरीके?",
-                }
-              ].map((q, i) => (
-                <button
-                  key={i}
-                  onClick={() => sendMsg(q[lang as keyof typeof q] || q.en)}
-                  style={{
-                    padding: "9px 12px",
-                    textAlign: "left",
-                    background: "#f0fdf4",
-                    border: "1px solid #bbf7d0",
-                    borderRadius: 8,
-                    fontSize: 12,
-                    color: "#15803d",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
-                  onMouseEnter={e => (e.target as HTMLElement).style.background = "#dcfce7"}
-                  onMouseLeave={e => (e.target as HTMLElement).style.background = "#f0fdf4"}
-                >
-                  🌱 {q[lang as keyof typeof q] || q.en}
-                </button>
-              ))}
-            </div>
+        <div className="card" style={{ height: "fit-content" }}>
+          <div className="section-title">
+            {lang === "ta" ? "அவசர் கேள்விகள்" : lang === "te" ? "అవసర ప్రశ్నలు" : lang === "ml" ? "ടെക്ക് ചോദ്യങ്ങൾ" : lang === "kn" ? "ಉತ್ಸಾಹ ಪ್ರಶ್ನೆಗಳು" : lang === "hi" ? "त्वरित प्रश्न" : "Quick Questions"}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {questions.map((q, i) => (
+              <button
+                key={i}
+                onClick={() => sendMsg(q)}
+                style={{
+                  padding: "9px 12px",
+                  textAlign: "left",
+                  background: "#f0fdf4",
+                  border: "1px solid #bbf7d0",
+                  borderRadius: 8,
+                  fontSize: 12,
+                  color: "#15803d",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+                onMouseEnter={e => (e.target as HTMLElement).style.background = "#dcfce7"}
+                onMouseLeave={e => (e.target as HTMLElement).style.background = "#f0fdf4"}
+              >
+                🌱 {q}
+              </button>
+            ))}
+          </div>
 
           <div style={{ marginTop: 20 }}>
-            <div className="section-title">Today&apos;s Farm Data</div>
+            <div className="section-title">{labels.title}</div>
             {[
-              { label: "Temperature", val: "32°C" },
-              { label: "Humidity", val: "67%" },
-              { label: "Soil Moisture", val: "38%" },
-              { label: "UV Index", val: "8 – High" },
+              { label: labels.temp, val: "32°C" },
+              { label: labels.humidity, val: "67%" },
+              { label: labels.moisture, val: "38%" },
+              { label: labels.uv, val: `8 – ${labels.high}` },
             ].map((d, i) => (
               <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #f3f4f6", fontSize: 12 }}>
                 <span style={{ color: "#6b7280" }}>{d.label}</span>

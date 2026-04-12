@@ -1,6 +1,6 @@
-# Smart Agri AI - ML Backend
+# Agri Nova - ML Backend
 
-This directory contains the machine learning models and API services for the Smart Agri AI platform.
+This directory contains the machine learning models and API services for the Agri Nova platform.
 
 ## Directory Structure
 

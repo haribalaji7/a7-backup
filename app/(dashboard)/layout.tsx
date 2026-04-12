@@ -6,12 +6,12 @@ import { useRouter } from "next/navigation";
 function AuthCheck({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
-  useEffect(() => {
-    const isAuth = localStorage.getItem("isAuthenticated");
-    if (!isAuth) {
-      router.push("/login");
-    }
-  }, [router]);
+//   useEffect(() => {
+//     const isAuth = localStorage.getItem("isAuthenticated");
+//     if (!isAuth) {
+//       router.push("/login");
+//     }
+//   }, [router]);
 
   return <>{children}</>;
 }

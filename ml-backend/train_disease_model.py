@@ -1,5 +1,5 @@
 """
-Smart Agri AI - Crop Disease Detection ML Pipeline
+Agri Nova - Crop Disease Detection ML Pipeline
 Complete training pipeline with transfer learning, data augmentation, and model export.
 """
 
@@ -732,7 +732,7 @@ def predict_disease(image_path: str, pickle_file_path: str) -> Dict:
 
 def main():
     print("=" * 70)
-    print("Smart Agri AI - Crop Disease Detection Model Training")
+    print("Agri Nova - Crop Disease Detection Model Training")
     print("=" * 70)
     print(f"Device: {Config.DEVICE}")
     print(f"Model: {Config.MODEL_BACKBONE}")

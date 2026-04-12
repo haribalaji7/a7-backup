@@ -64,7 +64,7 @@ export default function Sidebar() {
         <div className="flex items-center gap-2 mb-1">
           <span style={{ fontSize: 18 }}>🌱</span>
           <div>
-            <div className="sidebar-brand-title">Smart Agri Ai</div>
+            <div className="sidebar-brand-title">Agri Nova</div>
             <div className="sidebar-brand-subtitle">Your Agriculture Ai Platform</div>
           </div>
         </div>

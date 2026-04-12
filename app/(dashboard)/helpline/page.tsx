@@ -4,11 +4,19 @@ import { Phone, PhoneCall, Clock, Shield, ArrowRight, PhoneOff, Loader2, Globe }
 import { motion, AnimatePresence } from "framer-motion";
 import AgentCallModal from "@/components/helpline/AgentCallModal";
 
-type LanguageCode = "en" | "hi";
+type LanguageCode = "en" | "hi" | "bn" | "te" | "ta" | "mr" | "gu" | "pa" | "ml" | "kn";
 
 const LANGUAGES: Record<LanguageCode, { name: string; native: string }> = {
   en: { name: "English", native: "English" },
   hi: { name: "Hindi", native: "हिंदी" },
+  bn: { name: "Bengali", native: "বাংলা" },
+  te: { name: "Telugu", native: "తెలుగు" },
+  ta: { name: "Tamil", native: "தமிழ்" },
+  mr: { name: "Marathi", native: "मराठी" },
+  gu: { name: "Gujarati", native: "ગુજરાતી" },
+  pa: { name: "Punjabi", native: "ਪੰਜਾਬੀ" },
+  ml: { name: "Malayalam", native: "മലയാളം" },
+  kn: { name: "Kannada", native: "ಕನ್ನಡ" },
 };
 
 const translations = {
@@ -46,16 +54,214 @@ const translations = {
     aiExpertDesc: "तुरंत AI-संचालित कृषि सहायता प्राप्त करें",
     tipDesc: "अपने खेती के प्रश्नों के लिए तुरंत उत्तर पाने के लिए AI विशेषज्ञ का उपयोग करें - 24/7 उपलब्ध",
   },
+  bn: {
+    pageTitle: "হেল্পলাইন",
+    pageSubtitle: "কৃষকদের জন্য জরুরি যোগাযোগ এবং সরকারি হেল্পলাইন",
+    callAIExpert: "AI বিশেষজ্ঞকে কল করুন",
+    emergencyServices: "জরুরি সেবা",
+    governmentHelplines: "সরকারি হেল্পলাইন",
+    quickGuide: "দ্রুত নির্দেশিকা",
+    tip: "পরামর্শ",
+    clickAbove: "কল শুরু করতে উপরের যেকোনো নম্বরে ক্লিক করুন।",
+    agriHelplines: "কৃষি হেল্পলাইন",
+    kisanDesc: "কিসান কল সেন্টার (1800-180-1551) - কৃষি প্রশ্নের জন্য বিনামূল্যে সেবা",
+    govSchemes: "সরকারি প্রকল্প",
+    pmkisanDesc: "PM-KISAN হেল্পলাইন কৃষক কল্যাণ প্রকল্পের তথ্যের জন্য",
+    aiExpert: "AI বিশেষজ্ঞ",
+    aiExpertDesc: "তাৎক্ষণিক AI-চালিত কৃষি সহায়তা পান",
+    tipDesc: "আপনার চাষ সংক্রান্ত প্রশ্নের তাৎক্ষণিক উত্তরের জন্য AI বিশেষজ্ঞ ব্যবহার করুন - 24/7 উপলব্ধ",
+  },
+  te: {
+    pageTitle: " helpline",
+    pageSubtitle: "రైతులకు అత్యావశ్యకContacts మరియు ప్రభుత్వ Helplines",
+    callAIExpert: "AI నిపుణుడుకు కalls",
+    emergencyServices: "అత్యావశ్యక services",
+    governmentHelplines: "ప్రభుత్వ Helplines",
+    quickGuide: "త్వరిత_guide",
+    tip: "Tip",
+    clickAbove: "Call ప్రారంభించడానికి పైన ఏదైనా Numberపై Clickచెయ్యండి.",
+    agriHelplines: " agriculture Helpline",
+    kisanDesc: "Kisan Call Center (1800-180-1551) - Agriculture Questionలకు ఉచిత service",
+    govSchemes: "Government Schemes",
+    pmkisanDesc: "PM-KISAN Helpline farmer welfare scheme information",
+    aiExpert: "AI Expert",
+    aiExpertDesc: "Instant AI-powered Agriculture assistance",
+    tipDesc: "Your farming questionsకు Instant answersకు AI Expert ఉపయోగించండి - 24/7 available",
+  },
+  ta: {
+    pageTitle: "உதவி தொலைப்பேசி",
+    pageSubtitle: "விவசாயிகளுக்கு அவசர தொடர்புகள் மற்றும் அரசு உதவி தொலைப்பேசிகள்",
+    callAIExpert: "AI நிபுணருக்கு அழைக்க",
+    emergencyServices: "அவசர சேவைகள்",
+    governmentHelplines: "அரசு உதவி தொலைப்பேசிகள்",
+    quickGuide: "விரைவு வழிகாட்டி",
+    tip: "Tip",
+    clickAbove: "Call தொடங்க மேலே உள்ள எந்த Numberஐயும் Click செய்யுங்கள்.",
+    agriHelplines: "விவசாய உதவி தொலைப்பேசி",
+    kisanDesc: "Kisan Call Center (1800-180-1551) - விவசாய கேள்விகளுக்கு இலவச சேவை",
+    govSchemes: "அரசு திட்டங்கள்",
+    pmkisanDesc: "PM-KISAN Helpline விவசாயி நலத்திட்டம் விசாரணைக்கு",
+    aiExpert: "AI நிபுணர்",
+    aiExpertDesc: "Instant AI-powered விவசாய உதவி",
+    tipDesc: "உங்கள் farming கேள்விகளுக்கு Instant பதில்களுக்கு AI Expert உபயோகிக்கவும் - 24/7 கிடைக்கிறது",
+  },
+  mr: {
+    pageTitle: "हेल्पलाइन",
+    pageSubtitle: "शेतकऱ्यांसाठी आपत्कालीन संपर्क आणि सरकारी हेल्पलाइन",
+    callAIExpert: "AI तज्ञाला कॉल करा",
+    emergencyServices: "आपत्कालीन सेवा",
+    governmentHelplines: "सरकारी हेल्पलाइन",
+    quickGuide: "त्वरित मार्गदर्शक",
+    tip: "Tip",
+    clickAbove: "Call सुरू करण्यासाठी वरील कोणत्याही Number वर Click करा.",
+    agriHelplines: "शेती हेल्पलाइन",
+    kisanDesc: "Kisan Call Center (1800-180-1551) - शेती प्रश्नांसाठी विनामूल्य सेवा",
+    govSchemes: "सरकारी योजना",
+    pmkisanDesc: "PM-KISAN हेल्पलाइन शेतकरी कल्याण योजना माहितीसाठी",
+    aiExpert: "AI तज्ञ",
+    aiExpertDesc: "त्वरित AI-शेती मदत",
+    tipDesc: "तुमच्या शेती प्रश्नांची त्वरित उत्तरांसाठी AI Expert वापरा - 24/7 उपलब्ध",
+  },
+  gu: {
+    pageTitle: "Helpline",
+    pageSubtitle: "ખેડૂતો માટે તાત્કાલિક સંપર્કો અને સરકારી helplines",
+    callAIExpert: "AI નિષ્ણાતને Call કરો",
+    emergencyServices: "Emergency Services",
+    governmentHelplines: "Government Helplines",
+    quickGuide: "Quick Guide",
+    tip: "Tip",
+    clickAbove: "Call शરૂ કરવા માટે ઉપરની કોઈપણ Number પર Click કરો.",
+    agriHelplines: "Agriculture Helpline",
+    kisanDesc: "Kisan Call Center (1800-180-1551) - Agriculture Question માટે Free Service",
+    govSchemes: "Government Schemes",
+    pmkisanDesc: "PM-KISAN Helpline farmer welfare Scheme Information",
+    aiExpert: "AI Expert",
+    aiExpertDesc: "Instant AI-powered Agriculture assistance",
+    tipDesc: "Your farming Questions માટે Instant Answers માટે AI Expert use કરો - 24/7 Available",
+  },
+  pa: {
+    pageTitle: "Helpline",
+    pageSubtitle: "ਕਿਸਾਨਾਂ ਲਈ ਐਮਰਜੈਂਸੀ ਸੰਪਰਕ ਅਤੇ ਸਰਕਾਰੀ helplines",
+    callAIExpert: "AI ਮਾਹਰ ਨੂੰ ਕਾਲ ਕਰੋ",
+    emergencyServices: "Emergency Services",
+    governmentHelplines: "Government Helplines",
+    quickGuide: "Quick Guide",
+    tip: "Tip",
+    clickAbove: "Call ਸ਼ੁਰू ਕਰਨ ਲਈ ਉੱਤੇ ਕਿਸੇ ਵੀ Number 'ਤੇ Click ਕਰੋ.",
+    agriHelplines: "Agriculture Helpline",
+    kisanDesc: "Kisan Call Center (1800-180-1551) - Agriculture Questions ਲਈ Free Service",
+    govSchemes: "Government Schemes",
+    pmkisanDesc: "PM-KISAN Helpline farmer welfare Scheme Information",
+    aiExpert: "AI Expert",
+    aiExpertDesc: "Instant AI-powered Agriculture assistance",
+    tipDesc: "Your farming Questions ਲਈ Instant Answers ਲਈ AI Expert ਵਰਤੋਂ - 24/7 Available",
+  },
+  ml: {
+    pageTitle: "Helpline",
+    pageSubtitle: "കര്‍ഷകര്‍ക്കായി അടിയന്തര ബന്ധങ്ങളും സര്‍ക്കാര്‍ ഹെല്‍പ്ലിനുകളും",
+    callAIExpert: "AI വിദഗ്ധനെ വിളിക്കാന്‍",
+    emergencyServices: "അടിയന്തര സേവനങ്ങള്‍",
+    governmentHelplines: "സര്‍ക്കാര്‍ ഹെല്‍പ്ലിനുകള്‍",
+    quickGuide: "വേഗത്തിലുള്ള ഗൈഡ്",
+    tip: "Tip",
+    clickAbove: "Call ആരംഭിക്കാന്‍ മുകളില്‍ ഏത് Numberലും Click ചെയ്യുക.",
+    agriHelplines: "കാര്‍ഷിക ഹെല്‍പ്ലിന്‍",
+    kisanDesc: "Kisan Call Center (1800-180-1551) - കാര്‍ഷിക ചോദ്യങ്ങള്‍ക്ക് സൗജന്യ സേവനം",
+    govSchemes: "സര്‍ക്കാര്‍ പദ്ധതികള്‍",
+    pmkisanDesc: "PM-KISAN Helpline കര്‍ഷക ക്ഷേമ പദ്ധതി അറിയാന്‍",
+    aiExpert: "AI വിദഗ്ധന്‍",
+    aiExpertDesc: "തൽസമയ AI-കാര്‍ഷിക സഹായം",
+    tipDesc: "നിങ്ങളുടെ കാര്‍ഷിക ചോദ്യങ്ങള്‍ക്ക് തൽസമയ ഉത്തരങ്ങള്‍ക്ക് AI Expert ഉപയোഗിക്കുക - 24/7 ലഭ്യം",
+  },
+  kn: {
+    pageTitle: "Helpline",
+    pageSubtitle: "ರೈತರಿಗೆ ತುರ್ತು ಸಂಪರ್ಕಗಳು ಮತ್ತು ಸರ್ಕಾರಿ helplines",
+    callAIExpert: "AI ತಜ್ಞರಿಗೆ ಕರೆ ಮಾಡಿ",
+    emergencyServices: "ತುರ್ತು ಸೇವೆಗಳು",
+    governmentHelplines: "ಸರ್ಕಾರಿ helplines",
+    quickGuide: "ತ್ವರಿತ ಮಾರ್ಗದರ್ಶನ",
+    tip: "Tip",
+    clickAbove: "Call ಪ್ರಾರಂಭಿಸಲು ಮೇಲಿನ ಯಾವುದೇ Numberನ್ನು Click ಮಾಡಿ.",
+    agriHelplines: "ಕೃಷಿ helpline",
+    kisanDesc: "Kisan Call Center (1800-180-1551) - ಕೃಷಿ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉಚಿತ ಸೇವೆ",
+    govSchemes: "ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು",
+    pmkisanDesc: "PM-KISAN Helpline ರೈತ ಕಲ್ಯಾಣ ಯೋಜನಾ ಮಾಹಿತಿ",
+    aiExpert: "AI ತಜ್ಞ",
+    aiExpertDesc: "ತಕ್ಷಣದ AI-ಕೃಷಿ ಸಹಾಯ",
+    tipDesc: "ನಿಮ್ಮ ಬೇಸಾಯ ಪ್ರಶ್ನೆಗಳಿಗೆ ತಕ್ಷಣದ ಉತ್ತರಗಳಿಗೆ AI Expert ಬಳಸಿ - 24/7 ಲಭ್ಯ",
+  },
 };
 
-const emergencyServices = [
-  { name: "Police", nameHi: "पुलिस", number: "100", color: "bg-blue-500", icon: "🚔" },
-  { name: "Ambulance", nameHi: "एम्बुलेंस", number: "102 / 108", color: "bg-red-500", icon: "🚑" },
-  { name: "Fire", nameHi: "फायर", number: "101", color: "bg-orange-500", icon: "🚒" },
-  { name: "Emergency", nameHi: "आपातकाल", number: "112", color: "bg-purple-500", icon: "🆘" },
-];
+const emergencyServices: Record<LanguageCode, { name: string; number: string; color: string; icon: string }[]> = {
+  en: [
+    { name: "Police", number: "100", color: "bg-blue-500", icon: "🚔" },
+    { name: "Ambulance", number: "102 / 108", color: "bg-red-500", icon: "🚑" },
+    { name: "Fire", number: "101", color: "bg-orange-500", icon: "🚒" },
+    { name: "Emergency", number: "112", color: "bg-purple-500", icon: "🆘" },
+  ],
+  hi: [
+    { name: "पुलिस", number: "100", color: "bg-blue-500", icon: "🚔" },
+    { name: "एम्बुलेंस", number: "102 / 108", color: "bg-red-500", icon: "🚑" },
+    { name: "फायर", number: "101", color: "bg-orange-500", icon: "🚒" },
+    { name: "आपातकाल", number: "112", color: "bg-purple-500", icon: "🆘" },
+  ],
+  bn: [
+    { name: "পুলিশ", number: "100", color: "bg-blue-500", icon: "🚔" },
+    { name: "অ্যাম্বুলেন্স", number: "102 / 108", color: "bg-red-500", icon: "🚑" },
+    { name: "দমকল", number: "101", color: "bg-orange-500", icon: "🚒" },
+    { name: "জরুরি", number: "112", color: "bg-purple-500", icon: "🆘" },
+  ],
+  te: [
+    { name: "Policе", number: "100", color: "bg-blue-500", icon: "🚔" },
+    { name: "Ambulaansu", number: "102 / 108", color: "bg-red-500", icon: "🚑" },
+    { name: "Aagul", number: "101", color: "bg-orange-500", icon: "🚒" },
+    { name: "Avastham", number: "112", color: "bg-purple-500", icon: "🆘" },
+  ],
+  ta: [
+    { name: "Policе", number: "100", color: "bg-blue-500", icon: "🚔" },
+    { name: "Ambulaansu", number: "102 / 108", color: "bg-red-500", icon: "🚑" },
+    { name: "Fire", number: "101", color: "bg-orange-500", icon: "🚒" },
+    { name: "Udiral", number: "112", color: "bg-purple-500", icon: "🆘" },
+  ],
+  mr: [
+    { name: "पोलीस", number: "100", color: "bg-blue-500", icon: "🚔" },
+    { name: "AMBULANCE", number: "102 / 108", color: "bg-red-500", icon: "🚑" },
+    { name: "Fire", number: "101", color: "bg-orange-500", icon: "🚒" },
+    { name: "आपत्काल", number: "112", color: "bg-purple-500", icon: "🆘" },
+  ],
+  gu: [
+    { name: "Poliсе", number: "100", color: "bg-blue-500", icon: "🚔" },
+    { name: "AMBULANCE", number: "102 / 108", color: "bg-red-500", icon: "🚑" },
+    { name: "Aag", number: "101", color: "bg-orange-500", icon: "🚒" },
+    { name: "Udhadal", number: "112", color: "bg-purple-500", icon: "🆘" },
+  ],
+  pa: [
+    { name: "Police", number: "100", color: "bg-blue-500", icon: "🚔" },
+    { name: "AMBULANCE", number: "102 / 108", color: "bg-red-500", icon: "🚑" },
+    { name: "Aag", number: "101", color: "bg-orange-500", icon: "🚒" },
+    { name: "Emergency", number: "112", color: "bg-purple-500", icon: "🆘" },
+  ],
+  ml: [
+    { name: "Poliсе", number: "100", color: "bg-blue-500", icon: "🚔" },
+    { name: "AMBULANCE", number: "102 / 108", color: "bg-red-500", icon: "🚑" },
+    { name: "Fire", number: "101", color: "bg-orange-500", icon: "🚒" },
+    { name: "Udiral", number: "112", color: "bg-purple-500", icon: "🆘" },
+  ],
+  kn: [
+    { name: "Police", number: "100", color: "bg-blue-500", icon: "🚔" },
+    { name: "AMBULANCE", number: "102 / 108", color: "bg-red-500", icon: "🚑" },
+    { name: "Aagi", number: "101", color: "bg-orange-500", icon: "🚒" },
+    { name: "Utpanna", number: "112", color: "bg-purple-500", icon: "🆘" },
+  ],
+};
 
-const helplines = {
+const helplines: Record<LanguageCode, Array<{
+  category: string;
+  categoryHi: string;
+  icon: string;
+  color: string;
+  contacts: Array<{ label: string; labelHi: string; number: string; available: string }>;
+}>> = {
   en: [
     {
       category: "Agriculture",
@@ -92,35 +298,307 @@ const helplines = {
   ],
   hi: [
     {
-      category: "Agriculture",
+      category: "कृषि",
       categoryHi: "कृषि",
       icon: "🌾",
       color: "green",
       contacts: [
-        { label: "Kisan Call Center", labelHi: "किसान कॉल सेंटर", number: "1800-180-1551", available: "24/7" },
-        { label: "National Farmers Helpline", labelHi: "राष्ट्रीय किसान हेल्पलाइन", number: "1551", available: "24/7" },
-        { label: "Agri-Business Center", labelHi: "कृषि व्यापार केंद्र", number: "1800-425-1556", available: "24/7" },
+        { label: "किसान कॉल सेंटर", labelHi: "किसान कॉल सेंटर", number: "1800-180-1551", available: "24/7" },
+        { label: "राष्ट्रीय किसान हेल्पलाइन", labelHi: "राष्ट्रीय किसान हेल्पलाइन", number: "1551", available: "24/7" },
+        { label: "कृषि व्यापार केंद्र", labelHi: "कृषि व्यापार केंद्र", number: "1800-425-1556", available: "24/7" },
       ]
     },
     {
-      category: "Government Schemes",
+      category: "सरकारी योजनाएं",
       categoryHi: "सरकारी योजनाएं",
       icon: "🏛️",
       color: "blue",
       contacts: [
-        { label: "PM-Kisan Helpline", labelHi: "PM-Kisan हेल्पलाइन", number: "155261", available: "24/7" },
-        { label: "PM-Kisan Toll Free", labelHi: "PM-Kisan टोल फ्री", number: "1800115526", available: "24/7" },
-        { label: "NHB Helpline", labelHi: "NHB हेल्पलाइन", number: "1800-180-2006", available: "Mon-Sat" },
+        { label: "PM-Kisan हेल्पलाइन", labelHi: "PM-Kisan हेल्पलाइन", number: "155261", available: "24/7" },
+        { label: "PM-Kisan टोल फ्री", labelHi: "PM-Kisan टोल फ्री", number: "1800115526", available: "24/7" },
+        { label: "NHB हेल्पलाइन", labelHi: "NHB हेल्पलाइन", number: "1800-180-2006", available: "Mon-Sat" },
       ]
     },
     {
-      category: "Weather & Crop",
+      category: "मौसम और फसल",
       categoryHi: "मौसम और फसल",
       icon: "🌤️",
       color: "cyan",
       contacts: [
-        { label: "Weather Updates", labelHi: "मौसम अपडेट", number: "1800-180-1717", available: "24/7" },
-        { label: "Crop Insurance", labelHi: "फसल बीमा", number: "1800-258-0800", available: "24/7" },
+        { label: "मौसम अपडेट", labelHi: "मौसम अपडेट", number: "1800-180-1717", available: "24/7" },
+        { label: "फसल बीमा", labelHi: "फसल बीमा", number: "1800-258-0800", available: "24/7" },
+      ]
+    },
+  ],
+  bn: [
+    {
+      category: "কৃষি",
+      categoryHi: "কৃষি",
+      icon: "🌾",
+      color: "green",
+      contacts: [
+        { label: "কিসান কল সেন্টার", labelHi: "কিসান কল সেন্টার", number: "1800-180-1551", available: "24/7" },
+        { label: "জাতীয় কিসান হেল্পলাইন", labelHi: "জাতীয় কিসান হেল্পলাইন", number: "1551", available: "24/7" },
+        { label: "এগ্রি-বিজনেস সেন্টার", labelHi: "এগ্রি-বিজনেস সেন্টার", number: "1800-425-1556", available: "24/7" },
+      ]
+    },
+    {
+      category: "সরকারি প্রকল্প",
+      categoryHi: "সরকারি প্রকল্প",
+      icon: "🏛️",
+      color: "blue",
+      contacts: [
+        { label: "PM-Kisan হেল্পলাইন", labelHi: "PM-Kisan হেল্পলাইন", number: "155261", available: "24/7" },
+        { label: "PM-Kisan টোল ফ্রি", labelHi: "PM-Kisan টোল ফ্রি", number: "1800115526", available: "24/7" },
+        { label: "NHB হেল্পলাইন", labelHi: "NHB হেল্পলাইন", number: "1800-180-2006", available: "Mon-Sat" },
+      ]
+    },
+    {
+      category: "আবহাওয়া ও ফসল",
+      categoryHi: "আবহাওয়া ও ফসল",
+      icon: "🌤️",
+      color: "cyan",
+      contacts: [
+        { label: "আবহাওয়া আপডেট", labelHi: "আবহাওয়া আপডেট", number: "1800-180-1717", available: "24/7" },
+        { label: "ফসল বীমা", labelHi: "ফসল বীমা", number: "1800-258-0800", available: "24/7" },
+      ]
+    },
+  ],
+  te: [
+    {
+      category: "agriculture",
+      categoryHi: "agriculture",
+      icon: "🌾",
+      color: "green",
+      contacts: [
+        { label: "Kisan Call Center", labelHi: "Kisan Call Center", number: "1800-180-1551", available: "24/7" },
+        { label: "National Farmers Helpline", labelHi: "National Farmers Helpline", number: "1551", available: "24/7" },
+        { label: "Agri-Business Center", labelHi: "Agri-Business Center", number: "1800-425-1556", available: "24/7" },
+      ]
+    },
+    {
+      category: "Government Schemes",
+      categoryHi: "Government Schemes",
+      icon: "🏛️",
+      color: "blue",
+      contacts: [
+        { label: "PM-Kisan Helpline", labelHi: "PM-Kisan Helpline", number: "155261", available: "24/7" },
+        { label: "PM-Kisan Toll Free", labelHi: "PM-Kisan Toll Free", number: "1800115526", available: "24/7" },
+        { label: "NHB Helpline", labelHi: "NHB Helpline", number: "1800-180-2006", available: "Mon-Sat" },
+      ]
+    },
+    {
+      category: "Weather & Crop",
+      categoryHi: "Weather & Crop",
+      icon: "🌤️",
+      color: "cyan",
+      contacts: [
+        { label: "Weather Updates", labelHi: "Weather Updates", number: "1800-180-1717", available: "24/7" },
+        { label: "Crop Insurance", labelHi: "Crop Insurance", number: "1800-258-0800", available: "24/7" },
+      ]
+    },
+  ],
+  ta: [
+    {
+      category: "agriculture",
+      categoryHi: "agriculture",
+      icon: "🌾",
+      color: "green",
+      contacts: [
+        { label: "Kisan Call Center", labelHi: "Kisan Call Center", number: "1800-180-1551", available: "24/7" },
+        { label: "National Farmers Helpline", labelHi: "National Farmers Helpline", number: "1551", available: "24/7" },
+        { label: "Agri-Business Center", labelHi: "Agri-Business Center", number: "1800-425-1556", available: "24/7" },
+      ]
+    },
+    {
+      category: "Government Schemes",
+      categoryHi: "Government Schemes",
+      icon: "🏛️",
+      color: "blue",
+      contacts: [
+        { label: "PM-Kisan Helpline", labelHi: "PM-Kisan Helpline", number: "155261", available: "24/7" },
+        { label: "PM-Kisan Toll Free", labelHi: "PM-Kisan Toll Free", number: "1800115526", available: "24/7" },
+        { label: "NHB Helpline", labelHi: "NHB Helpline", number: "1800-180-2006", available: "Mon-Sat" },
+      ]
+    },
+    {
+      category: "Weather & Crop",
+      categoryHi: "Weather & Crop",
+      icon: "🌤️",
+      color: "cyan",
+      contacts: [
+        { label: "Weather Updates", labelHi: "Weather Updates", number: "1800-180-1717", available: "24/7" },
+        { label: "Crop Insurance", labelHi: "Crop Insurance", number: "1800-258-0800", available: "24/7" },
+      ]
+    },
+  ],
+  mr: [
+    {
+      category: "शेती",
+      categoryHi: "शेती",
+      icon: "🌾",
+      color: "green",
+      contacts: [
+        { label: "Kisan Call Center", labelHi: "Kisan Call Center", number: "1800-180-1551", available: "24/7" },
+        { label: "National Farmers Helpline", labelHi: "National Farmers Helpline", number: "1551", available: "24/7" },
+        { label: "Agri-Business Center", labelHi: "Agri-Business Center", number: "1800-425-1556", available: "24/7" },
+      ]
+    },
+    {
+      category: "Government Schemes",
+      categoryHi: "Government Schemes",
+      icon: "🏛️",
+      color: "blue",
+      contacts: [
+        { label: "PM-Kisan Helpline", labelHi: "PM-Kisan Helpline", number: "155261", available: "24/7" },
+        { label: "PM-Kisan Toll Free", labelHi: "PM-Kisan Toll Free", number: "1800115526", available: "24/7" },
+        { label: "NHB Helpline", labelHi: "NHB Helpline", number: "1800-180-2006", available: "Mon-Sat" },
+      ]
+    },
+    {
+      category: "Weather & Crop",
+      categoryHi: "Weather & Crop",
+      icon: "🌤️",
+      color: "cyan",
+      contacts: [
+        { label: "Weather Updates", labelHi: "Weather Updates", number: "1800-180-1717", available: "24/7" },
+        { label: "Crop Insurance", labelHi: "Crop Insurance", number: "1800-258-0800", available: "24/7" },
+      ]
+    },
+  ],
+  gu: [
+    {
+      category: "agriculture",
+      categoryHi: "agriculture",
+      icon: "🌾",
+      color: "green",
+      contacts: [
+        { label: "Kisan Call Center", labelHi: "Kisan Call Center", number: "1800-180-1551", available: "24/7" },
+        { label: "National Farmers Helpline", labelHi: "National Farmers Helpline", number: "1551", available: "24/7" },
+        { label: "Agri-Business Center", labelHi: "Agri-Business Center", number: "1800-425-1556", available: "24/7" },
+      ]
+    },
+    {
+      category: "Government Schemes",
+      categoryHi: "Government Schemes",
+      icon: "🏛️",
+      color: "blue",
+      contacts: [
+        { label: "PM-Kisan Helpline", labelHi: "PM-Kisan Helpline", number: "155261", available: "24/7" },
+        { label: "PM-Kisan Toll Free", labelHi: "PM-Kisan Toll Free", number: "1800115526", available: "24/7" },
+        { label: "NHB Helpline", labelHi: "NHB Helpline", number: "1800-180-2006", available: "Mon-Sat" },
+      ]
+    },
+    {
+      category: "Weather & Crop",
+      categoryHi: "Weather & Crop",
+      icon: "🌤️",
+      color: "cyan",
+      contacts: [
+        { label: "Weather Updates", labelHi: "Weather Updates", number: "1800-180-1717", available: "24/7" },
+        { label: "Crop Insurance", labelHi: "Crop Insurance", number: "1800-258-0800", available: "24/7" },
+      ]
+    },
+  ],
+  pa: [
+    {
+      category: "agriculture",
+      categoryHi: "agriculture",
+      icon: "🌾",
+      color: "green",
+      contacts: [
+        { label: "Kisan Call Center", labelHi: "Kisan Call Center", number: "1800-180-1551", available: "24/7" },
+        { label: "National Farmers Helpline", labelHi: "National Farmers Helpline", number: "1551", available: "24/7" },
+        { label: "Agri-Business Center", labelHi: "Agri-Business Center", number: "1800-425-1556", available: "24/7" },
+      ]
+    },
+    {
+      category: "Government Schemes",
+      categoryHi: "Government Schemes",
+      icon: "🏛️",
+      color: "blue",
+      contacts: [
+        { label: "PM-Kisan Helpline", labelHi: "PM-Kisan Helpline", number: "155261", available: "24/7" },
+        { label: "PM-Kisan Toll Free", labelHi: "PM-Kisan Toll Free", number: "1800115526", available: "24/7" },
+        { label: "NHB Helpline", labelHi: "NHB Helpline", number: "1800-180-2006", available: "Mon-Sat" },
+      ]
+    },
+    {
+      category: "Weather & Crop",
+      categoryHi: "Weather & Crop",
+      icon: "🌤️",
+      color: "cyan",
+      contacts: [
+        { label: "Weather Updates", labelHi: "Weather Updates", number: "1800-180-1717", available: "24/7" },
+        { label: "Crop Insurance", labelHi: "Crop Insurance", number: "1800-258-0800", available: "24/7" },
+      ]
+    },
+  ],
+  ml: [
+    {
+      category: "agriculture",
+      categoryHi: "agriculture",
+      icon: "🌾",
+      color: "green",
+      contacts: [
+        { label: "Kisan Call Center", labelHi: "Kisan Call Center", number: "1800-180-1551", available: "24/7" },
+        { label: "National Farmers Helpline", labelHi: "National Farmers Helpline", number: "1551", available: "24/7" },
+        { label: "Agri-Business Center", labelHi: "Agri-Business Center", number: "1800-425-1556", available: "24/7" },
+      ]
+    },
+    {
+      category: "Government Schemes",
+      categoryHi: "Government Schemes",
+      icon: "🏛️",
+      color: "blue",
+      contacts: [
+        { label: "PM-Kisan Helpline", labelHi: "PM-Kisan Helpline", number: "155261", available: "24/7" },
+        { label: "PM-Kisan Toll Free", labelHi: "PM-Kisan Toll Free", number: "1800115526", available: "24/7" },
+        { label: "NHB Helpline", labelHi: "NHB Helpline", number: "1800-180-2006", available: "Mon-Sat" },
+      ]
+    },
+    {
+      category: "Weather & Crop",
+      categoryHi: "Weather & Crop",
+      icon: "🌤️",
+      color: "cyan",
+      contacts: [
+        { label: "Weather Updates", labelHi: "Weather Updates", number: "1800-180-1717", available: "24/7" },
+        { label: "Crop Insurance", labelHi: "Crop Insurance", number: "1800-258-0800", available: "24/7" },
+      ]
+    },
+  ],
+  kn: [
+    {
+      category: "agriculture",
+      categoryHi: "agriculture",
+      icon: "🌾",
+      color: "green",
+      contacts: [
+        { label: "Kisan Call Center", labelHi: "Kisan Call Center", number: "1800-180-1551", available: "24/7" },
+        { label: "National Farmers Helpline", labelHi: "National Farmers Helpline", number: "1551", available: "24/7" },
+        { label: "Agri-Business Center", labelHi: "Agri-Business Center", number: "1800-425-1556", available: "24/7" },
+      ]
+    },
+    {
+      category: "Government Schemes",
+      categoryHi: "Government Schemes",
+      icon: "🏛️",
+      color: "blue",
+      contacts: [
+        { label: "PM-Kisan Helpline", labelHi: "PM-Kisan Helpline", number: "155261", available: "24/7" },
+        { label: "PM-Kisan Toll Free", labelHi: "PM-Kisan Toll Free", number: "1800115526", available: "24/7" },
+        { label: "NHB Helpline", labelHi: "NHB Helpline", number: "1800-180-2006", available: "Mon-Sat" },
+      ]
+    },
+    {
+      category: "Weather & Crop",
+      categoryHi: "Weather & Crop",
+      icon: "🌤️",
+      color: "cyan",
+      contacts: [
+        { label: "Weather Updates", labelHi: "Weather Updates", number: "1800-180-1717", available: "24/7" },
+        { label: "Crop Insurance", labelHi: "Crop Insurance", number: "1800-258-0800", available: "24/7" },
       ]
     },
   ],
@@ -217,10 +695,10 @@ export default function HelplinePage() {
             {t.emergencyServices}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            {emergencyServices.map((service, i) => (
+            {emergencyServices[lang].map((service, i) => (
               <motion.button
                 key={i}
-                onClick={() => handleEmergencyClick({ name: lang === "hi" ? service.nameHi : service.name, number: service.number, icon: service.icon })}
+                onClick={() => handleEmergencyClick({ name: service.name, number: service.number, icon: service.icon })}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="card"
@@ -244,7 +722,7 @@ export default function HelplinePage() {
                   borderRadius: "4px 0 0 4px"
                 }} />
                 <div style={{ fontSize: 28, marginBottom: 8 }}>{service.icon}</div>
-                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{lang === "hi" ? service.nameHi : service.name}</div>
+                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{service.name}</div>
                 <div style={{ fontSize: 16, fontWeight: 700, color: "#374151" }}>{service.number}</div>
               </motion.button>
             ))}
@@ -265,13 +743,13 @@ export default function HelplinePage() {
                 gap: 8
               }}>
                 <span style={{ fontSize: 18 }}>{section.icon}</span>
-                <span style={{ fontWeight: 600 }}>{lang === "hi" ? section.categoryHi : section.category}</span>
+                <span style={{ fontWeight: 600 }}>{lang !== "en" ? section.categoryHi : section.category}</span>
               </div>
               <div style={{ padding: 12 }}>
                 {section.contacts.map((contact, cIdx) => (
                   <div
                     key={cIdx}
-                    onClick={() => handleEmergencyClick({ name: lang === "hi" ? (contact.labelHi || contact.label) : contact.label, number: contact.number, icon: "📞" })}
+                    onClick={() => handleEmergencyClick({ name: lang !== "en" ? (contact.labelHi || contact.label) : contact.label, number: contact.number, icon: "📞" })}
                     style={{
                       display: "flex",
                       justifyContent: "space-between",
@@ -293,7 +771,7 @@ export default function HelplinePage() {
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 500, fontSize: 13, color: "#1f2937" }}>{lang === "hi" ? (contact.labelHi || contact.label) : contact.label}</div>
+                      <div style={{ fontWeight: 500, fontSize: 13, color: "#1f2937" }}>{lang !== "en" ? (contact.labelHi || contact.label) : contact.label}</div>
                       <div style={{ fontSize: 11, color: "#6b7280", display: "flex", alignItems: "center", gap: 4 }}>
                         <Clock size={10} /> {contact.available}
                       </div>

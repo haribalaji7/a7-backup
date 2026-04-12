@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run next:dev\" \"npm run ml:dev\"",
+    "tunnel": "npx localtunnel --port 3000",
+    "dev:tunnel": "concurrently \"npm run next:dev\" \"npx localtunnel --port 3000\"",
     "next:dev": "next dev --webpack",
     "ml:setup": "cd ml-backend && pip install -r requirements.txt -q",
     "ml:train": "cd ml-backend && python train_model.py",
@@ -40,6 +42,7 @@
     "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
+    "localtunnel": "^2.0.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
