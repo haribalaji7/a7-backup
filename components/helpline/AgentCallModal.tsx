@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PhoneOff, Mic, MicOff, Volume2, Globe, User, Wifi, Loader2 } from "lucide-react";
+import axios from "axios";
+import type { LanguageCode } from "@/lib/types";
 
 interface AgentCallModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-type LanguageCode = "en" | "ta" | "kn" | "ml" | "te" | "hi";
 
 type CallState = "idle" | "connecting" | "listening" | "thinking" | "speaking";
 
@@ -60,20 +60,46 @@ interface SpeechRecognitionErrorEvent {
 
 const languages: { id: LanguageCode; label: string; voiceLang: string }[] = [
   { id: "en", label: "English", voiceLang: "en-US" },
+  { id: "hi", label: "हिंदी", voiceLang: "hi-IN" },
   { id: "ta", label: "தமிழ்", voiceLang: "ta-IN" },
+  { id: "te", label: "తెలుగు", voiceLang: "te-IN" },
   { id: "kn", label: "ಕನ್ನಡ", voiceLang: "kn-IN" },
   { id: "ml", label: "മലയാളം", voiceLang: "ml-IN" },
-  { id: "te", label: "తెలుగు", voiceLang: "te-IN" },
-  { id: "hi", label: "हिंदी", voiceLang: "hi-IN" },
+  { id: "bn", label: "বাংলা", voiceLang: "bn-IN" },
+  { id: "gu", label: "ગુજરાતી", voiceLang: "gu-IN" },
+  { id: "mr", label: "मराठी", voiceLang: "mr-IN" },
+  { id: "pa", label: "ਪੰਜਾਬੀ", voiceLang: "pa-IN" },
+  { id: "or", label: "ଓଡ଼ିଆ", voiceLang: "or-IN" },
+  { id: "as", label: "অসমীয়া", voiceLang: "as-IN" },
+  { id: "ur", label: "اردو", voiceLang: "ur-IN" },
+  { id: "ne", label: "नेपाली", voiceLang: "ne-IN" },
+  { id: "ks", label: "कॉशुर", voiceLang: "ks-IN" },
+  { id: "sd", label: "सिन्धी", voiceLang: "sd-IN" },
+  { id: "kok", label: "कोंकणी", voiceLang: "kok-IN" },
+  { id: "mai", label: "मैथिली", voiceLang: "mai-IN" },
+  { id: "sa", label: "संस्कृतम्", voiceLang: "sa-IN" },
 ];
 
-const translations: Record<LanguageCode, { status: string; agent: string; listening: string; thinking: string; speaking: string }> = {
-  en: { status: "Connecting...", agent: "Agri Nova Expert", listening: "Listening...", thinking: "Thinking...", speaking: "Speaking..." },
-  ta: { status: "இணைக்கிறது...", agent: "வேளாண் AI நிபுணர்", listening: "கேட்கிறது...", thinking: "நினைக்கிறது...", speaking: "பேசுகிறது..." },
-  kn: { status: "ಸಂಪರ್ಕಿಸುತ್ತಿದೆ...", agent: "ಕೃಷಿ AI ತಜ್ಞ", listening: "ಕೇಳುತ್ತಿದೆ...", thinking: "ಯೋಚಿಸುತ್ತಿದೆ...", speaking: "ಮಾತಾಡುತ್ತಿದೆ..." },
-  ml: { status: "ബന്ധിപ്പിക്കുന്നു...", agent: "കൃഷി AI വിദഗ്ധൻ", listening: "കേട്ടുകൊണ്ടിരിക്കുന്നു...", thinking: "ചിന്തിക്കുന്നു...", speaking: "സംസാരിക്കുന്നു..." },
-  te: { status: "कनेक्ट हो रहा है...", agent: "कृषि AI विशेषज्ञ", listening: "सुन रहा है...", thinking: "सोच रहा है...", speaking: "बोल रहा है..." },
-  hi: { status: "कनेक्ट हो रहा है...", agent: "कृषि AI विशेषज्ञ", listening: "सुन रहा हूं...", thinking: "सोच रहा हूं...", speaking: "बोल रहा हूं..." },
+const translations: Record<string, { status: string; agent: string; listening: string; thinking: string; speaking: string }> = {
+  en:  { status: "Connecting...", agent: "Agri Nova Expert", listening: "Listening...", thinking: "Thinking...", speaking: "Speaking..." },
+  hi:  { status: "कनेक्ट हो रहा है...", agent: "कृषि AI विशेषज्ञ", listening: "सुन रहा हूं...", thinking: "सोच रहा हूं...", speaking: "बोल रहा हूं..." },
+  ta:  { status: "இணைக்கிறது...", agent: "வேளாண் AI நிபுணர்", listening: "கேட்கிறது...", thinking: "நினைக்கிறது...", speaking: "பேசுகிறது..." },
+  te:  { status: "కనెక్ట్ అవుతోంది...", agent: "వ్యవసాయ AI నిపుణుడు", listening: "వింటోంది...", thinking: "ఆలోచిస్తోంది...", speaking: "మాట్లాడుతోంది..." },
+  kn:  { status: "ಸಂಪರ್ಕಿಸುತ್ತಿದೆ...", agent: "ಕೃಷಿ AI ತಜ್ಞ", listening: "ಕೇಳುತ್ತಿದೆ...", thinking: "ಯೋಚಿಸುತ್ತಿದೆ...", speaking: "ಮಾತಾಡುತ್ತಿದೆ..." },
+  ml:  { status: "ബന്ധിപ്പിക്കുന്നു...", agent: "കൃഷി AI വിദഗ്ധൻ", listening: "കേട്ടുകൊണ്ടിരിക്കുന്നു...", thinking: "ചിന്തിക്കുന്നു...", speaking: "സംസാരിക്കുന്നു..." },
+  bn:  { status: "কানেক্ট হচ্ছে...", agent: "কৃষি AI বিশেষজ্ঞ", listening: "শুনছে...", thinking: "ভাবছে...", speaking: "বলছে..." },
+  gu:  { status: "કનેક્ટ થઈ રહ્યું છે...", agent: "કૃષિ AI નિષ્ણાત", listening: "સાંભળી રહ્યું છે...", thinking: "વિચારી રહ્યું છે...", speaking: "બોલી રહ્યું છે..." },
+  mr:  { status: "कनेक्ट होत आहे...", agent: "कृषी AI तज्ञ", listening: "ऐकत आहे...", thinking: "विचार करत आहे...", speaking: "बोलत आहे..." },
+  pa:  { status: "ਕਨੈਕਟ ਹੋ ਰਿਹਾ ਹੈ...", agent: "ਖੇਤੀ AI ਮਾਹਰ", listening: "ਸੁਣ ਰਿਹਾ ਹੈ...", thinking: "ਸੋਚ ਰਿਹਾ ਹੈ...", speaking: "ਬੋਲ ਰਿਹਾ ਹੈ..." },
+  or:  { status: "କनेक्ट ହେଉଛି...", agent: "କୃଷି AI ବିଶେଷଜ୍ଞ", listening: "ଶୁଣୁଛି...", thinking: "ଭାବୁଛି...", speaking: "କହୁଛି..." },
+  as:  { status: "কানেক্ট হৈ আছে...", agent: "কৃষি AI বিশেষজ্ঞ", listening: "শুনি আছে...", thinking: "ভাবি আছে...", speaking: "কৈ আছে..." },
+  ur:  { status: "منسلک ہو رہا ہے...", agent: "زرعی AI ماہر", listening: "سن رہا ہے...", thinking: "سوچ رہا ہے...", speaking: "بول رہا ہے..." },
+  ne:  { status: "जडिँदै छ...", agent: "कृषि AI विशेषज्ञ", listening: "सुन्दै छ...", thinking: "सोच्दै छ...", speaking: "बोल्दै छ..." },
+  ks:  { status: "कनेक्ट हो रहा है...", agent: "कृषि AI विशेषज्ञ", listening: "सुन रहा है...", thinking: "सोच रहा है...", speaking: "बोल रहा है..." },
+  sd:  { status: "ڳنڍجي رهيو آهي...", agent: "زرعي AI ماهر", listening: "ٻڌي رهيو آهي...", thinking: "سوچي رهيو آهي...", speaking: "ڳالهائي رهيو آهي..." },
+  kok: { status: "जोडपी...", agent: "कृषी AI तज्ञ", listening: "ऐकता...", thinking: "विचार करता...", speaking: "उलयता..." },
+  mai: { status: "जुड़ैत अछि...", agent: "कृषि AI विशेषज्ञ", listening: "सुनैत अछि...", thinking: "सोचैत अछि...", speaking: "बोलैत अछि..." },
+  sa:  { status: "संयोजयति...", agent: "कृषि AI विशेषज्ञः", listening: "शृणोति...", thinking: "चिन्तयति...", speaking: "भाषते..." },
 };
 
 export default function AgentCallModal({ isOpen, onClose }: AgentCallModalProps) {
@@ -83,9 +109,9 @@ export default function AgentCallModal({ isOpen, onClose }: AgentCallModalProps)
   const [transcript, setTranscript] = useState("");
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const synthRef = useRef<SpeechSynthesisUtterance | null>(null);
   const messagesRef = useRef<{ role: string; content: string }[]>([]);
   const startRecognitionRef = useRef<() => void>(() => {});
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const t = translations[selectedLang] || translations.en;
 
@@ -204,13 +230,53 @@ export default function AgentCallModal({ isOpen, onClose }: AgentCallModalProps)
     }
   };
 
-  const speakResponse = (text: string) => {
+  const speakResponse = async (text: string) => {
     log("TTS: Starting...");
     
+    const done = () => {
+      if (!isMuted) {
+        setCallState("listening");
+        setTimeout(() => startRecognition(), 500);
+      }
+    };
+
+    try {
+      const response = await axios.post('/api/tts', { text, language: selectedLang }, {
+        responseType: 'blob',
+        timeout: 15000,
+      });
+
+      const audioUrl = URL.createObjectURL(response.data);
+      const audio = new Audio(audioUrl);
+      currentAudioRef.current = audio;
+
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+        currentAudioRef.current = null;
+        done();
+      };
+
+      audio.onerror = () => {
+        URL.revokeObjectURL(audioUrl);
+        currentAudioRef.current = null;
+        browserTTS(text, done);
+      };
+
+      await audio.play();
+    } catch (err: any) {
+      const data = err?.response?.data;
+      if (data?.unsupported) {
+        log("Cloud TTS unsupported for " + selectedLang + ", using browser TTS");
+      } else {
+        log("Cloud TTS failed, using browser TTS: " + (err?.message || "unknown"));
+      }
+      browserTTS(text, done);
+    }
+  };
+
+  const browserTTS = (text: string, onDone: () => void) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      log("TTS not available");
-      setCallState("listening");
-      startRecognition();
+      onDone();
       return;
     }
 
@@ -221,45 +287,37 @@ export default function AgentCallModal({ isOpen, onClose }: AgentCallModalProps)
     const targetLang = langConfig?.voiceLang || "en-US";
     
     const voices = window.speechSynthesis.getVoices();
-    log("Voices: " + voices.length);
-    
     const voice = voices.find(v => v.lang.toLowerCase().startsWith(targetLang.split("-")[0])) 
       || voices.find(v => v.lang.toLowerCase().startsWith("en"));
     
     if (voice) {
       utterance.voice = voice;
-      log("Voice: " + voice.name);
     }
     
     utterance.lang = targetLang;
     utterance.rate = 0.9;
 
     utterance.onend = () => {
-      log("TTS done");
-      if (!isMuted) {
-        setCallState("listening");
-        setTimeout(() => startRecognition(), 500);
-      }
+      currentAudioRef.current = null;
+      onDone();
     };
 
-    utterance.onerror = (e) => {
-      log("TTS error: " + e.error);
-      if (!isMuted) {
-        setCallState("listening");
-        startRecognition();
-      }
+    utterance.onerror = () => {
+      currentAudioRef.current = null;
+      onDone();
     };
 
-    synthRef.current = utterance;
     window.speechSynthesis.speak(utterance);
-    log("TTS speak() called");
   };
 
   const stopSpeaking = () => {
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+    }
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
-    synthRef.current = null;
   };
 
   useEffect(() => {

@@ -3,136 +3,94 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { Send, Bot, User, Mic, MicOff, Loader2, Volume2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { voiceService } from "@/services/voiceService";
+import type { LanguageCode, ChatMessage } from "@/lib/types";
+import { useLocale, LocaleProvider } from "@/contexts/LocaleContext";
 
-type LanguageCode = "en" | "ta" | "te" | "ml" | "kn" | "hi";
-
-interface ChatMessage {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  time: string;
-}
-
-const LANGUAGES: Record<LanguageCode, { name: string; native: string }> = {
+const LANGUAGES: Record<string, { name: string; native: string }> = {
   en: { name: "English", native: "English" },
+  hi: { name: "Hindi", native: "हिंदी" },
+  bn: { name: "Bengali", native: "বাংলা" },
   ta: { name: "Tamil", native: "தமிழ்" },
   te: { name: "Telugu", native: "తెలుగు" },
+  mr: { name: "Marathi", native: "मराठी" },
+  gu: { name: "Gujarati", native: "ગુજરાતી" },
+  pa: { name: "Punjabi", native: "ਪੰਜਾਬੀ" },
   ml: { name: "Malayalam", native: "മലയാളം" },
   kn: { name: "Kannada", native: "ಕನ್ನಡ" },
-  hi: { name: "Hindi", native: "हिंदी" },
+  or: { name: "Odia", native: "ଓଡ଼ିଆ" },
+  as: { name: "Assamese", native: "অসমীয়া" },
+  ne: { name: "Nepali", native: "नेपाली" },
+  ur: { name: "Urdu", native: "اردو" },
+  sa: { name: "Sanskrit", native: "संस्कृतम्" },
+  ks: { name: "Kashmiri", native: "कॉशुर" },
+  sd: { name: "Sindhi", native: "सिन्धी" },
+  mai: { name: "Maithili", native: "मैथिली" },
+  bo: { name: "Bodo", native: "बरʼ" },
+  doi: { name: "Dogri", native: "डोगरी" },
+  mni: { name: "Manipuri", native: "মৈতৈলোন্" },
+  kok: { name: "Konkani", native: "कोंकणी" },
+  sat: { name: "Santali", native: "ᱥᱟᱱᱛᱟᱲᱤ" },
 };
 
-const localizedGreetings: Record<LanguageCode, string> = {
-  en: "Namaste! 🌾 I'm your Agri Nova Assistant. I can help with crop management, soil health, pest control, irrigation, and more. How can I assist you today?",
-  ta: "வணக்கம்! 🌾 நான் உங்களின் Agri Nova உதவியாளர். பயிர் மேலாண்மை, மண் ஆரோக்கியம், பூச்சி கட்டுப்பாடு, நீர்ப்பாசனம் ஆகியவற்றில் உதவ முடியும். இன்று உங்களுக்கு எப்படி உதவலாம?",
-  te: "నమస్కారం! 🌾 నేను మీ Agri Nova అసిస్టెంట్. పంట నిర్వహణ, నేల ఆరోగ్యం, కీటక నియంత్రణ, ప ిరిగేషన్‌లో सहाय्य करू शकतो. ఈ रोजु मी आपली कशी मदत करू शकतो?",
-  ml: "നമസ്കാരം! 🌾 ഞാൻ നിങ്ങളുടെ Agri Nova സഹായിയാണ്. കൃഷി മാനേജ്മെന്റ്, മണ്ണിന്റെ ആരോഗ്യം, കീട നിയന്ത്രണം, ജലസേചനം എന്നിവയിൽ സഹായിക്കാൻ കഴിയും. ഇന്ന് എങ്ങനെ സഹായിക്കാനാകും?",
-  kn: "ನಮಸ್ಕಾರ! 🌾 ನಾನು ನಿಮ್ಮ Agri Nova ಸಹಾಯಕ. ಬೆಳೆ ನಿರ್ವಹಣೆ, ಮಣ್ಣಿನ ಆರೋಗ್ಯ, ಕೀಟ ನಿಯಂತ್ರಣ, ನೀರಾವರಿಯಲ್ಲಿ ಸಹಾಯ ಮಾಡಬಹುದು. ಇಂದು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",
-  hi: "नमस्ते! 🌾 मैं आपका Agri Nova सहायक हूं। मैं फसल प्रबंधन, मिट्टी की स्वास्थ्य, कीट नियंत्रण, सिंचाई में मदद कर सकता हूं। आज मैं आपकी कैसे मदद कर सकता हूं?",
-};
 
-const placeholders: Record<LanguageCode, string> = {
-  en: "Ask about crops, soil, weather, pests…",
-  ta: "பயிர்கள், மண், வானிலை, பூச்சிகள் பற்றி கேளுங்கள்…",
-  te: "పంటలు, నేల, వాతావరణం, కీటకాల గురించి అడుగండి…",
-  ml: "കൃഷി, മണ്ണ്, കാലാവസ്ഥ, കീടങ്ങൾ എന്നിവയ�� കുറിച്ച് ചോദിക്കുക…",
-  kn: "ಬೆಳೆ, ಮಣ್ಣು, ಹವಾಮಾನ, ಕೀಟಗಳ ಬಗ್ಗೆ ಕೇಳಿ…",
-  hi: "फसल, मिट्टी, मौसम, कीटों के बारे में पूछें…",
-};
-
-const quickQuestions: Record<LanguageCode, string[]> = {
-  en: [
-    "How do I improve soil moisture?",
-    "Best fertiliser for wheat in March?",
-    "How to prevent early blight?",
-    "When should I irrigate paddy?",
-    "Natural pest control methods?"
-  ],
-  ta: [
-    "மண் ஈரப்பதத்தை எப்படி மேம்படுத்துவது?",
-    "மார்ச் மாதத்தில் கோதுமைக்கு சிறந்த உரம்?",
-    "ஆரம்ப கர அழிவை தடுப்பது எப்படி?",
-    "அரிசிக்கு எப்போது நீர்ப்பாசனம் செய்வது?",
-    "இயற்கை பூச்சி கட்டுப்பாடு முறைகள்?"
-  ],
-  te: [
-    "నేల లోతును ఎలా మెరుగుపరచుకుంటారు?",
-    "मार्च में गेहूं के लिए सबसे अच्छा खाद?",
-    "early blight ను ఎలా నివారిస్తారు?",
-    "पाले को何时 निर्जल करणे?",
-    " природан методы борьбы с вредителями?"
-  ],
-  ml: [
-    "മണ്ണിലെ ഈരയമത എങ്ങനെ വർദ്ധിപ്പിക്കാം?",
-    "മാര്‍ച്ചില്‍ ഗോതമ്ബിന് ഏറ്റവും നല്ല വളം?",
-    "ആദിമ ബ്ലൈറ്റ് എങ്ങനെ തടയാം?",
-    "അരിക്ക് എപ്പോഴാണ് ജലസേചനം ചെയ്യേണ്ടത്?",
-    "പ്രകൃതിദത്ത കീട നിയന്ത്രണ മാര്‍ഗങ്ങള്‍?"
-  ],
-  kn: [
-    "ಮಣ್ಣಿನ ತೇವಾಂಶವನ್ನು ಹೇಗೆ ಸುಧಾರಿಸುವುದು?",
-    "ಮಾರ್ಚ್ ತಿಂಗಳಲ್ಲಿ ಗೋಧಿಗೆ ಅತ್ಯುತ್ತಮ ರಸಾಯನಗೊಬ್ಬರ?",
-    "ಆರಂಭಿಕ ಬ್ಲೈಟ್ ಅನ್ನು ಹೇಗೆ ತಡೆಗಟ್ಟುವುದು?",
-    "ಅಕ್ಕಿಗೆ ಯಾವಾಗ ನೀರಾವರಿ ಮಾಡಬೇಕು?",
-    "ನೈಸರ್ಗಿಕ ಕೀಟ ನಿಯಂತ್ರಣ ವಿಧಾನಗಳು?"
-  ],
-  hi: [
-    "मिट्टी की नमी कैसे बढ़ाएं?",
-    "मार्च में गेहूं के लिए सबसे अच्छा खाद?",
-    "अलग ब्लाइट को कैसे रोकें?",
-    "धान की सिंचाई कब करनी चाहिए?",
-    "कीट नियंत्रण के प्राकृतिक तरीके?"
-  ]
-};
-
-const farmDataLabels: Record<LanguageCode, { title: string; temp: string; humidity: string; moisture: string; uv: string; high: string }> = {
-  en: { title: "Today's Farm Data", temp: "Temperature", humidity: "Humidity", moisture: "Soil Moisture", uv: "UV Index", high: "High" },
-  ta: { title: "இன்றைய விவசாய தரவு", temp: "வெப்பநிலை", humidity: "ஈரப்பதம்", moisture: "மண் ஈரப்பதம்", uv: "UV குறியீடு", high: "அதிகம்" },
-  te: { title: "నేటి వద్ద డేటా", temp: "ఉష్ణ���ар", humidity: "आर्द्रత", moisture: "नैल लोतु", uv: "UV ఇండ్x", high: "ఎ�్కువ" },
-  ml: { title: "ഇന്നത്തെ ഫാം ഡാറ്റ", temp: "ഊഷായത", humidity: "ഈരയമത", moisture: "മണ്ണിലെ ഈരയമത", uv: "UV സൂചിക", high: "ഉയര്‍ന്ന" },
-  kn: { title: "ಇಂದಿನ ತೋಟ ಡೇಟಾ", temp: "ತಾಪಮಾನ", humidity: "ಆರ್ದ್ರತೆ", moisture: "ಮಣ್ಣಿನ ತೇವಾಂಶ", uv: "UV ಸೂಚಿಕ", high: "ಹೆಚ್ಚು" },
-  hi: { title: "आज का फार्म डेटा", temp: "तापमान", humidity: "नमी", moisture: "मिट्टी की नमी", uv: "यूवी इंडेक्स", high: "उच्च" }
-};
 
 function formatTime() {
   return new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 }
 
-export default function AssistantPage() {
+function AssistantPageInner() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lang, setLang] = useState<LanguageCode>("en");
   const [micState, setMicState] = useState<"idle" | "listening" | "processing" | "speaking">("idle");
   const [isRecording, setIsRecording] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
 
+  const { lang, setLang, t } = useLocale();
+
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const prevLangRef = useRef(lang);
 
   useEffect(() => {
     if (!hasInitialized) {
       setMessages([{
         id: Date.now().toString(),
         role: "assistant",
-        content: localizedGreetings[lang],
+        content: t.greeting,
         time: formatTime(),
       }]);
       setHasInitialized(true);
     }
-  }, [lang, hasInitialized]);
+  }, [t.greeting, hasInitialized]);
+
+  useEffect(() => {
+    if (hasInitialized && prevLangRef.current !== lang && prevLangRef.current) {
+      prevLangRef.current = lang;
+      voiceService.stopSpeech();
+      setPlayingMessage(null);
+      setMessages([{
+        id: Date.now().toString(),
+        role: "assistant",
+        content: t.greeting,
+        time: formatTime(),
+      }]);
+    }
+    prevLangRef.current = lang;
+  }, [lang, hasInitialized, t.greeting]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  const placeholder = useMemo(() => placeholders[lang], [lang]);
+  const placeholder = useMemo(() => t.placeholder, [t.placeholder]);
 
   useEffect(() => {
-    setInput(placeholders[lang]);
-  }, [lang]);
+    setInput(t.placeholder);
+  }, [t.placeholder]);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -294,14 +252,14 @@ export default function AssistantPage() {
     setMessages([{
       id: Date.now().toString(),
       role: "assistant",
-      content: localizedGreetings[lang],
+      content: t.greeting,
       time: formatTime(),
     }]);
     setError(null);
   };
 
-  const labels = farmDataLabels[lang];
-  const questions = quickQuestions[lang];
+  const labels = t.farmData;
+  const questions = t.quickQuestions;
 
   return (
     <div>
@@ -309,7 +267,7 @@ export default function AssistantPage() {
         <div>
           <div className="page-title" style={{ marginBottom: 4 }}>AI Farm Assistant</div>
           <div className="page-subtitle" style={{ marginBottom: 0 }}>
-            Chat with AI powered by GPT-4 • Supports 5 Indian languages
+            Chat with AI powered by GPT-4 • Supports 22 Indian languages
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -332,12 +290,6 @@ export default function AssistantPage() {
             onChange={(e) => {
               const newLang = e.target.value as LanguageCode;
               setLang(newLang);
-              setMessages([{
-                id: Date.now().toString(),
-                role: "assistant",
-                content: localizedGreetings[newLang],
-                time: formatTime(),
-              }]);
               setInput("");
             }}
             style={{
@@ -570,5 +522,13 @@ export default function AssistantPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function AssistantPage() {
+  return (
+    <LocaleProvider>
+      <AssistantPageInner />
+    </LocaleProvider>
   );
 }

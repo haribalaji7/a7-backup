@@ -1,6 +1,5 @@
 import axios from 'axios';
-
-export type LanguageCode = "en" | "ta" | "hi" | "te" | "ml" | "kn";
+import type { LanguageCode } from '@/lib/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types for Web Speech API (to avoid 'any' types)
@@ -32,19 +31,40 @@ interface SpeechRecognitionErrorEvent extends Event {
   error: string;
 }
 
-export const LANGUAGES: Record<LanguageCode, { 
+export const LANGUAGES: Partial<Record<LanguageCode, { 
   name: string; 
   bcp47: string; 
   translationCode: string;
   speechLang: string;
-}> = {
+}>> = {
   en: { name: "English", bcp47: "en-IN", translationCode: "en", speechLang: "en-IN" },
-  ta: { name: "Tamil", bcp47: "ta-IN", translationCode: "ta", speechLang: "ta-IN" },
   hi: { name: "Hindi", bcp47: "hi-IN", translationCode: "hi", speechLang: "hi-IN" },
+  bn: { name: "Bengali", bcp47: "bn-IN", translationCode: "bn", speechLang: "bn-IN" },
+  ta: { name: "Tamil", bcp47: "ta-IN", translationCode: "ta", speechLang: "ta-IN" },
   te: { name: "Telugu", bcp47: "te-IN", translationCode: "te", speechLang: "te-IN" },
+  mr: { name: "Marathi", bcp47: "mr-IN", translationCode: "mr", speechLang: "mr-IN" },
+  gu: { name: "Gujarati", bcp47: "gu-IN", translationCode: "gu", speechLang: "gu-IN" },
+  pa: { name: "Punjabi", bcp47: "pa-IN", translationCode: "pa", speechLang: "pa-IN" },
   ml: { name: "Malayalam", bcp47: "ml-IN", translationCode: "ml", speechLang: "ml-IN" },
-  kn: { name: "Kannada", bcp47: "kn-IN", translationCode: "kn", speechLang: "kn-IN" }
+  kn: { name: "Kannada", bcp47: "kn-IN", translationCode: "kn", speechLang: "kn-IN" },
+  or: { name: "Odia", bcp47: "or-IN", translationCode: "or", speechLang: "or-IN" },
+  as: { name: "Assamese", bcp47: "as-IN", translationCode: "as", speechLang: "as-IN" },
+  ne: { name: "Nepali", bcp47: "ne-IN", translationCode: "ne", speechLang: "ne-IN" },
+  ur: { name: "Urdu", bcp47: "ur-IN", translationCode: "ur", speechLang: "ur-IN" },
+  sa: { name: "Sanskrit", bcp47: "sa-IN", translationCode: "sa", speechLang: "sa-IN" },
+  ks: { name: "Kashmiri", bcp47: "ks-IN", translationCode: "ks", speechLang: "ks-IN" },
+  sd: { name: "Sindhi", bcp47: "sd-IN", translationCode: "sd", speechLang: "sd-IN" },
+  mai: { name: "Maithili", bcp47: "mai-IN", translationCode: "mai", speechLang: "mai-IN" },
+  bo: { name: "Bodo", bcp47: "brx-IN", translationCode: "bo", speechLang: "brx-IN" },
+  doi: { name: "Dogri", bcp47: "doi-IN", translationCode: "doi", speechLang: "doi-IN" },
+  mni: { name: "Manipuri", bcp47: "mni-IN", translationCode: "mni", speechLang: "mni-IN" },
+  kok: { name: "Konkani", bcp47: "kok-IN", translationCode: "kok", speechLang: "kok-IN" },
+  sat: { name: "Santali", bcp47: "sat-IN", translationCode: "sat", speechLang: "sat-IN" },
 };
+
+function getLangConfig(lang: LanguageCode) {
+  return LANGUAGES[lang] || LANGUAGES.en!;
+}
 
 let currentAudio: HTMLAudioElement | null = null;
 let mediaRecorder: MediaRecorder | null = null;
@@ -126,7 +146,7 @@ export const voiceService = {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = LANGUAGES[lang].speechLang;
+    recognition.lang = getLangConfig(lang).speechLang;
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
@@ -201,8 +221,9 @@ export const voiceService = {
     onError: (err: string) => void
   ): Promise<void> {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream = mediaStream;
+      mediaRecorder = new MediaRecorder(mediaStream, { mimeType: 'audio/webm' });
       audioChunks = [];
 
       mediaRecorder.ondataavailable = (event) => {
@@ -280,7 +301,45 @@ export const voiceService = {
 
     this.stopSpeech();
     onStart?.();
-    this.browserTextToSpeech(text, lang, onEnd, onError);
+
+    try {
+      const response = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, language: lang }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        if (data?.unsupported) {
+          this.browserTextToSpeech(text, lang, onEnd, onError);
+          return;
+        }
+        throw new Error(data?.error || "TTS failed");
+      }
+
+      const blob = await response.blob();
+      const audioUrl = URL.createObjectURL(blob);
+      const audio = new Audio(audioUrl);
+      currentAudio = audio;
+
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+        currentAudio = null;
+        onEnd?.();
+      };
+
+      audio.onerror = () => {
+        URL.revokeObjectURL(audioUrl);
+        currentAudio = null;
+        this.browserTextToSpeech(text, lang, onEnd, onError);
+      };
+
+      await audio.play();
+    } catch (error: any) {
+      console.warn("Cloud TTS failed, falling back to browser TTS:", error?.message);
+      this.browserTextToSpeech(text, lang, onEnd, onError);
+    }
   },
 
   browserTextToSpeech(
@@ -298,10 +357,11 @@ export const voiceService = {
       speechSynthesis.cancel();
       
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = LANGUAGES[lang].bcp47;
+      const cfg = getLangConfig(lang);
+      utterance.lang = cfg.bcp47;
       
       const voices = speechSynthesis.getVoices();
-      const bcpPrefix = LANGUAGES[lang].bcp47.split('-')[0];
+      const bcpPrefix = cfg.bcp47.split('-')[0];
       const voice = voices.find(v => v.lang.startsWith(bcpPrefix));
       if (voice) {
         utterance.voice = voice;
@@ -330,10 +390,11 @@ export const voiceService = {
        try {
          speechSynthesis.cancel();
          const utterance = new SpeechSynthesisUtterance(text);
-         utterance.lang = LANGUAGES[lang].bcp47;
-         
-         const voices = speechSynthesis.getVoices();
-         const bcpPrefix = LANGUAGES[lang].bcp47.split('-')[0];
+         const cfg = getLangConfig(lang);
+         utterance.lang = cfg.bcp47;
+          
+          const voices = speechSynthesis.getVoices();
+          const bcpPrefix = cfg.bcp47.split('-')[0];
          const voice = voices.find(v => v.lang.startsWith(bcpPrefix));
          if (voice) {
            utterance.voice = voice;
@@ -353,6 +414,7 @@ export const voiceService = {
   stopSpeech(): void {
     if (currentAudio) {
       currentAudio.pause();
+      currentAudio.src = "";
       currentAudio = null;
     }
     speechSynthesis.cancel();
@@ -361,7 +423,7 @@ export const voiceService = {
 
   async translateToRegional(text: string, targetLang: LanguageCode): Promise<string> {
     if (targetLang === "en") return text;
-    return translateText(text, LANGUAGES[targetLang].translationCode);
+    return translateText(text, getLangConfig(targetLang).translationCode);
   },
 
   isPlaying(): boolean {

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "agri-nova-disease": {
+      "command": "python",
+      "args": ["ml-backend/mcp_disease_server.py"],
+      "cwd": "C:\\Users\\projects\\a7\\ml-backend",
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}

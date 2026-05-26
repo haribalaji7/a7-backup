@@ -13,7 +13,9 @@
     "ml:start": "cd ml-backend && uvicorn main:app --host 0.0.0.0 --port 8000",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "schemes:seed": "npx tsx --env-file=.env scripts/seed-schemes.ts",
+    "schemes:sync": "npx tsx --env-file=.env bin/sync-schemes.ts"
   },
   "dependencies": {
     "@heyputer/puter.js": "^2.2.14",
@@ -32,13 +34,15 @@
     "react-leaflet": "^5.0.0",
     "recharts": "^3.8.0",
     "recordrtc": "^5.6.2",
-    "tailwind-merge": "^3.5.0"
+    "tailwind-merge": "^3.5.0",
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
     "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
