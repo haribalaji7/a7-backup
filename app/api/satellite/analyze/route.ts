@@ -12,7 +12,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch("http://localhost:8000/analyze/ndvi", {
+    const backendUrl = process.env.ML_BACKEND_URL || "http://localhost:8000";
+    const response = await fetch(`${backendUrl}/analyze/ndvi`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

@@ -92,10 +92,6 @@ function AssistantPageInner() {
     setInput(t.placeholder);
   }, [t.placeholder]);
 
-  useEffect(() => {
-    setInput(placeholders[lang]);
-  }, [lang]);
-
   function showToast(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
