@@ -42,8 +42,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error };
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { error: new Error(data.error || "Failed to sign in") };
+      }
+      if (data.session) {
+        const { error: setSessionError } = await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+        if (setSessionError) {
+          return { error: setSessionError };
+        }
+      }
+      return { error: null };
+    } catch (err: any) {
+      return { error: new Error(err.message || "An unexpected error occurred during login") };
+    }
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
